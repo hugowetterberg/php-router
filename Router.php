@@ -76,33 +76,6 @@ abstract class Router
     }
 
     /**
-     * @desc set up the include paths with defaults or specified
-     * @param array $paths
-     */
-    public static function setIncludePaths( $paths = array() )
-    {
-        if( count($path) === 0 )
-        {
-            $paths = array(
-                'libs',
-                'businessModels',
-                'controllers',
-                'dataModels'
-            );
-        }
-
-        //TODO: come up with better way to determine base path
-        $base_path = str_replace( '/public', '', getcwd() );
-        $include_path = get_include_path();
-        foreach( $paths as $k => $i_path )
-        {
-            if( $k > 0 ) $include_path .= PATH_SEPARATOR;
-            $include_path .= $base_path . '/' . $i_path . '/';
-        }
-        set_include_path($include_path);
-    }
-
-    /**
      * @desc enables the class autoloader
      */
     public static function enableClassAutoLoader()
@@ -216,16 +189,15 @@ abstract class Router
 
                  //Any regexp which does not match, results in a total failure
                  // of the current iteration
-                 if( FALSE === ereg($regexp, $path_parts[$k]) )
+                 if( preg_match($regexp, $path_parts[$k]) > 0 )
+                 {
+                    $args_match[$route_map_path_parts[$k]] = $path_parts[$k];
+                 }
+                 else
                  {
                      $dynamic_element_match = FALSE;
                      break;
                  }
-                 else
-                 {
-                     $args_match[$route_map_path_parts[$k]] = $path_parts[$k];
-                 }
-
             }
             if( FALSE === $dynamic_element_match )
                 continue;

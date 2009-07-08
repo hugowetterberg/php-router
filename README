@@ -1,0 +1,71 @@
+php-router
+
+The Router class is designed to map url's to controller->action methods in your
+framework. It is not in itself a framework. To use it, you will need to create
+a index/bootstrap file and configure apache to route requests there. Included is
+a sample.htaccess file which you can copy into your apache public directory
+along with your index/bootstrap file.
+
+The route path is a string specified with no preceding slash and can contain
+static and dynamic elements. Dynamic elements are defined with ":" + string
+(':dynamic'). They must have corresponding array keys in the args array. The
+dynamic args keys can match anything (NULL) or regular expressions.
+Static elements are defined without the ":".
+
+Examples
+========
+url: "/foo/bar/908" will match
+this path: 'foo/bar/:id' mapped to array(
+        'controller' => 'foo',
+        'action'     => 'bar',
+        'args'       => array(':id' => NULL)
+    )
+and will result in foo::bar( array(':id' => 908) )
+
+
+Basic index.php Example:
+=======================
+include('Router.php');
+
+try {
+    Router::addRoute('foo/bar/:id', array(
+        'controller' => 'foo',
+        'action'     => 'bar',
+        'args'       => array(':id' => NULL)
+    ));
+} catch (Exception $e) {
+    echo $e;
+}
+
+Router::mapUrlRequest();
+
+======================
+
+Example using external routes.php file:
+======================================
+#routes.php must contain only an array stored in a variable, $routes
+# and should be in the format:
+#$routes = array(
+#    'foo/bar/:id' => array(
+#        'controller' => 'foo',
+#        'action'     => 'bar',
+#        'args'       => array(':id' => '/^[0-9]+$/')
+#    ),
+#    //Catch all map (should go last)
+#    ':controller/:action/:id' => array(
+#        'controller' => ':controller',
+#        'action'     => ':action',
+#        'args'       => array(':controller' => NULL, ':action' => NULL, ':id' => NULL)
+#    )
+#);
+
+
+include('Router.php');
+
+Router::setRoutesFilePath( '/path/to/routes.php' );
+Router::autoLoadRoutes();
+
+Router::mapUrlRequest();
+
+======================================
+
