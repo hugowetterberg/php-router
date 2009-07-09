@@ -119,12 +119,11 @@ abstract class Router
             // check the count of the args sub array
             if( 0 === count(self::$routeMaps[$path]['args']) )
             {
-                self::dispatch(
+                return self::dispatch(
                         self::$routeMaps[$path]['controller'],
                         self::$routeMaps[$path]['action'],
                         self::$routeMaps[$path]['args']
                 );
-                return TRUE;
             }
 
         }
