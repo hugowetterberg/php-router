@@ -32,15 +32,6 @@ abstract class Router
     /**
      *
      * @param string $path
-     */
-    public static function setRoutesFilePath( $path )
-    {
-        self::$routesFilePath = $path;
-    }
-
-    /**
-     *
-     * @param string $path
      * @param array $map
      * @throws Exception
      */
@@ -58,8 +49,11 @@ abstract class Router
     /**
      * @desc Auto Load routes using Router::$routesFilePath
      */
-    public static function autoLoadRoutes()
+    public static function autoLoadRoutes( $path = NULL )
     {
+        if( NULL !== $path )
+            self::$routesFilePath = $path;
+
         require_once( self::$routesFilePath );
 
         try

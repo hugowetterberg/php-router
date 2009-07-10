@@ -62,8 +62,8 @@ Example using external routes.php file:
 
 include('Router.php');
 
-Router::setRoutesFilePath( '/path/to/routes.php' );
-Router::autoLoadRoutes();
+//Specify the location of the routes.php file
+Router::autoLoadRoutes( '/path/to/routes.php' );
 
 Router::mapUrlRequest();
 
