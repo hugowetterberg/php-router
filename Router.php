@@ -1,6 +1,6 @@
 <?php
 /*
-    Copyright 2009 Rob Apodaca
+    Copyright 2009 Rob Apodaca <rob.apodaca@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,6 +31,12 @@ abstract class Router
 
     /**
      *
+     * @var array
+     */
+    private static $customDispatcher = array();
+
+    /**
+     * Adds a route to the list of possible routes
      * @param string $path
      * @param array $map
      * @throws Exception
@@ -47,7 +53,8 @@ abstract class Router
     }
 
     /**
-     * @desc Auto Load routes using Router::$routesFilePath
+     * Auto Load routes using Router::$routesFilePath
+     * @param string $path
      */
     public static function autoLoadRoutes( $path = NULL )
     {
@@ -70,7 +77,7 @@ abstract class Router
     }
 
     /**
-     * @desc enables the class autoloader
+     * Enables the class autoloader
      */
     public static function enableClassAutoLoader()
     {
@@ -78,7 +85,10 @@ abstract class Router
     }
 
     /**
-     * @desc Register this static method with spl_autoload_register
+     * This method will be registered by calling Router::enableClassAutoLoader()
+     * When registered, it will attempt to auto load classes in files named
+     * classname.php. There is no point in calling this method yourself.
+     *
      * @param string $class
      */
     public static function classAutoLoader( $class )
@@ -87,7 +97,7 @@ abstract class Router
     }
 
     /**
-     * @desc maps the current url request to any or sets header 404
+     * Maps the current url request to any or sets header 404
      */
     public static function mapUrlRequest()
     {
@@ -97,7 +107,7 @@ abstract class Router
     }
 
     /**
-     * @desc finds a maching route in the map using path
+     * Finds a maching route in the map using path
      * @param string $path
      * @return boolean
      */
@@ -245,7 +255,7 @@ abstract class Router
     }
 
     /**
-     * @desc dispatches controller, action, args
+     * Dispatches controller, action, args
      * @param string $controller
      * @param string $action
      * @param array $args
@@ -253,12 +263,19 @@ abstract class Router
      */
     private static function dispatch( $controller, $action, $args )
     {
+        if( count(self::$customDispatcher) > 0 )
+        {
+            return call_user_func_array(
+                array( self::$customDispatcher['class'], 
+                       self::$customDispatcher['method']), 
+                array($controller, $action, $args)
+            );
+        }
+
         if( class_exists($controller) )
         {
-            $c = new $controller;
-
-            if( method_exists($c, $action))
-                $c->$action($args);
+            if( method_exists($controller, $action))
+                call_user_func(array($controller, $action), $args);
             else
                 return FALSE;
         }
@@ -267,6 +284,16 @@ abstract class Router
             return FALSE;
         }
         return TRUE;
+    }
+
+    /**
+     *
+     * @param mixed $class - class name or object
+     * @param string $method - name of dispatch method
+     */
+    public function setDispatcher( $class, $method )
+    {
+        self::$customDispatcher = array( 'class' => $class, 'method' => $method);
     }
 }
 ?>
