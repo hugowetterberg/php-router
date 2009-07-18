@@ -26,14 +26,6 @@ abstract class Router
     private static $routeMaps = array();
 
     /**
-     * The path to the routes file.
-     * @var string
-     * @static
-     * @access private
-     */
-    private static $routesFilePath;
-
-    /**
      * The path to the controllers
      * @var string
      * @static
@@ -102,15 +94,15 @@ abstract class Router
     }
 
     /**
-     * Auto Load routes using Router::$routesFilePath
-     * @param string $path
+     * Auto Load routes using $routes_file
+     * @param string $routes_file
      * @static
      * @access public
      * @return void
      */
-    public static function autoLoadRoutes( $path )
+    public static function autoLoadRoutes( $routes_file )
     {
-        require( self::$routesFilePath );
+        require( $routes_file );
 
         try
         {
@@ -143,7 +135,7 @@ abstract class Router
         //Split the path up so that each element can be worked on
         $path_parts = split('/', $path);
         $path_parts_count = count($path_parts);
-
+        
         //There may be a static map for the path, check first by matching the
         // $path verbatim
         if( array_key_exists($path, self::$routeMaps) )
