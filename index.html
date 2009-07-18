@@ -4,7 +4,15 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
         <title>robap/php-router @ GitHub</title>
-
+        <link href="prettify/prettify.css" type="text/css" rel="stylesheet" />
+        <script type="text/javascript" src="prettify/prettify.js"></script>
+        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
+        <script type="text/javascript">
+          $(document).ready(function() {
+            $('pre').addClass('prettyprint')
+            prettyPrint()
+          });
+        </script>
         <style type="text/css">
             body {
                 margin-top: 1.0em;
@@ -24,7 +32,7 @@
             a { color: #db7c1f; }
             .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
             .download { float: right; }
-            pre { background: #000; color: #fff; padding: 15px;}
+            pre { background: #e0e0e0; color: #000; padding: 15px;}
             hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
             .footer { text-align:center; padding-top:30px; font-style: italic; }
         </style>
@@ -94,13 +102,14 @@
         <pre>"/foo/bar/908"</pre>
 
         <p>And a mapping:</p>
-        <pre>
+        
+<pre>&lt;?php
 array('/foo/bar/:id' => array (
     'controller' => 'foo',
     'action'     => 'bar',
     'args'       => array(':id' => NULL)
 ));
-        </pre>
+?&gt;</pre>
         
         <p>
             the following will be executed:
@@ -131,8 +140,8 @@ array('/foo/bar/:id' => array (
             The other method of adding routes is to use the Router::addRoute method. For
             example:
         </p>
-        <pre>
-try {
+        
+<pre>try {
     Router::addRoute('/my/path/:year/:id', array (
         'controller' => 'controllerclass',
         'action' => 'controllerMethod',
@@ -146,8 +155,8 @@ try {
     //etc
 } catch (Exception $e) {
     echo $e->getMessage();
-}
-        </pre>
+}</pre>
+        
         <p>
             Note that the Router::addRoute() throws an Exception if the 'controller', 'action'
             and 'args' keys are not present in the second argument. Even if you are creating
@@ -162,7 +171,8 @@ try {
             The routes file (if you use one) must contain an array stored in a variable
             named "$routes" and should be in the format:
         </p>
-        <pre>
+        
+<pre>&lt;?php
 $routes = array (
     'foo/bar/:id' => array (
         'controller' => 'foo',
@@ -177,9 +187,11 @@ $routes = array (
         'args'       => array(':controller' => NULL, ':action' => NULL, ':id' => NULL)
     )
 );
-        </pre>
+?&gt;</pre>
+        
         <h2>Basic index.php Example</h2>
-        <pre>
+        
+<pre>&lt;?php
 include('Router.php');
 
 Router::setControllersPath('/path/to/controllers', '.php');
@@ -195,10 +207,12 @@ try {
 }
 
 Router::matchMap($_SERVER['REQUEST_URI']);
-        </pre>
+?&gt;</pre>
+        
         
         <h2>Example index.php using routes.php file</h2>
-        <pre>
+        
+<pre>&lt;?php
 include('Router.php');
 
 Router::setControllersPath('/path/to/controllers', '.php');
@@ -207,7 +221,8 @@ Router::setControllersPath('/path/to/controllers', '.php');
 Router::autoLoadRoutes( '/path/to/your/routes.php' );
 
 Router::matchMap($_SERVER['REQUEST_URI']);
-        </pre>
+?&gt;</pre>
+        
         <h2>The default dispatcher</h2>
         <p>
             The default dispatcher will call your controller::action statically. If you
@@ -225,7 +240,8 @@ Router::matchMap($_SERVER['REQUEST_URI']);
         <p>
             For example:
         </p>
-        <pre>
+        
+<pre>&lt;?php
 class customDispatcher
 {
     /**
@@ -254,7 +270,8 @@ $custom_dispatcher = new customDispatcher();
 Router::setDispatcher( $custom_dispatcher, 'dispatch' );
 
 Router::matchMap($_SERVER['REQUEST_URI']);
-        </pre>
+?&gt;</pre>
+        
 
         <p>
             VERY IMPORTANT! When creating your own dispatcher, make sure you
@@ -267,9 +284,9 @@ Router::matchMap($_SERVER['REQUEST_URI']);
 
         <p>The method getErrors() is provided to help debug routing errors:</p>
 
-        <pre>
-print_r( Router::getErrors() );
-        </pre>
+        
+<pre>print_r( Router::getErrors() );</pre>
+       
 
         <h2>License</h2>
         <p>
