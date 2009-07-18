@@ -48,15 +48,16 @@
             <span class="small">by <a href="http://github.com/robap">robap</a></span>
         </h1>
         <div class="description">
-            php routing class
+            a php routing class
         </div>
 
         <p>
-            The php router class is designed to map url&rsquo;s to controller::action methods
-            in your MVC framework. It is not in itself a framework. To use it, you
-            will need to create a index/bootstrap file and configure apache to route
-            requests there. Included is a sample.htaccess file which you can copy
-            into your apache public directory along with your index/bootstrap file.
+            The php router class is designed to help you with php routing by mapping
+            so called &quot;pretty&quot; url&rsquo;s to class::methods that reside in your
+            framework. It is not in itself a framework. To use it, you will need
+            to create a index/bootstrap file and configure apache to route requests
+            there. Included is a sample.htaccess file which you can copy into your
+            apache public directory along with your index/bootstrap file.
         </p>
         <h2>Dependencies</h2>
         <p><a href="http://www.php.net/">&gt;= php 5.2.x</a></p>
@@ -66,17 +67,19 @@
                 Copy Router.php to some place accessible by your framework and include it.
             </li>
             <li>
+                Create your index.php file and Tell apache to route requests
+                through index.php (see sample.htaccess).
+            </li>
+            <li>
+                Set your controllers path.
+            </li>
+            <li>
                 Create your routes for your controller/actions (see the 'Adding Routes'
                 section below).
             </li>
             <li>
-                Create your index.php file and call any desired Router methods.
-            </li>
-            <li>
-                Tell apache to route requests through index.php (see sample.htaccess).
-            </li>
-            <li>
-                Call Router::mapUrlRequest at the end of your index.php file.
+                Call Router::matchMap(); at the end of
+                your index.php file.
             </li>
         </ol>
         <h2>Explanation of how routing behaves</h2>
@@ -84,26 +87,28 @@
             The route path is a string specified with no preceding slash and can contain
             static and dynamic elements. Dynamic elements are defined with ":" + name
             (':dynamic'). They must have corresponding array keys in the args array. The
-            dynamic args keys can match anything (NULL) or strings which may be regular
-            expressions ( '/&lt;regexp&gt;/'). Static elements are defined without the ":".
+            dynamic args are where you specify what type of strings will match.
         </p>
-        <p>So, given the following url: "/foo/bar/908"</p>
-        <p>this path will be matched: 'foo/bar/:id'</p>
-        <p>and will be mapped to:</p>
+        <p>So, given the following url:</p>
+        
+        <pre>"/foo/bar/908"</pre>
+
+        <p>And a mapping:</p>
         <pre>
-array (
+array('/foo/bar/:id' => array (
     'controller' => 'foo',
     'action'     => 'bar',
     'args'       => array(':id' => NULL)
-);
+));
         </pre>
+        
         <p>
-            where, in this case, id can be anything. The result will be to execute
-            foo::bar( array(':id' => 908) ).
+            the following will be executed:
         </p>
+        <pre>foo::bar( array(':id' => 908) )</pre>
         <p>
-            Notice that the controller::method is passed an array as the argument. Your
-            controller classes should be written to accept this array.
+            Notice that the controller::method is passed an array as the argument.
+            Your controller classes should be written to accept this array.
         </p>
 
         <h2>Dynamic elements</h2>
@@ -111,19 +116,17 @@ array (
             Dynamic element values can be either NULL, which will match anything or a string
             which represents a regular expression. The regular expression is evaluated using
             php's preg_match function. So any valid regex will work. Some common regex's:
-        <br />
-            '/^[0-9]+$/'    : must be a number<br />
-            '/^[0-9]4$/'    : must be a 4 digit number<br />
-            '/^abc[0-9]+$/' : must be a string begining with 'abc' and ending in numbers<br />
+        <br /><br />
+            '/^\d+$/'    : must be a number<br />
+            '/^\d{4}$/'  : must be a 4 digit number<br />
+            '/^abc\d+$/' : must be a string begining with 'abc' and ending in numbers<br />
 
         <h2>Adding routes</h2>
         <p>
-            You can add routes all at once by using the Router::autoLoadRoutes method. By
-            default, the Router class will look for routes located in '../config/routes.php'
-            ONLY when calling the Router::autoLoadRoutes method. You can change the location
-            of the routes file by passing a new path when calling the Router::autoLoadRoutes
-            method.
+            You can add routes all at once by using the Router::autoLoadRoutes method.
         </p>
+        <p>Example:</p>
+        <pre>Router::autoLoadRoutes('/path/to/my/routes/file')</pre>
         <p>
             The other method of adding routes is to use the Router::addRoute method. For
             example:
@@ -133,7 +136,7 @@ try {
     Router::addRoute('/my/path/:year/:id', array (
         'controller' => 'controllerclass',
         'action' => 'controllerMethod',
-        'args' => array(':year' => '/^[0-9]4$/', ':id' => '/^[0-9]+$/')
+        'args' => array(':year' => '/^\d{4}$/', ':id' => '/^\d+$/')
     );
     Router::addRoute('/my/other/path/:id', array (
         'controller' => 'controllerClass',
@@ -146,7 +149,7 @@ try {
 }
         </pre>
         <p>
-            Note that the Router::addRoute throws an Exception if the 'controller', 'action'
+            Note that the Router::addRoute() throws an Exception if the 'controller', 'action'
             and 'args' keys are not present in the second argument. Even if you are creating
             a static map with no dynamic elements, the args key must contain an empty array.
         </p>
@@ -160,13 +163,12 @@ try {
             named "$routes" and should be in the format:
         </p>
         <pre>
-<?php
 $routes = array (
     'foo/bar/:id' => array (
         'controller' => 'foo',
         'action'     => 'bar',
         //This map will match id's that contain numbers only
-        'args'       => array(':id' => '/^[0-9]+$/')
+        'args'       => array(':id' => '/^\d+$/')
     ),
     //You may define a catch all map. It should go last in the array.
     ':controller/:action/:id' => array (
@@ -175,40 +177,36 @@ $routes = array (
         'args'       => array(':controller' => NULL, ':action' => NULL, ':id' => NULL)
     )
 );
-?>
         </pre>
         <h2>Basic index.php Example</h2>
         <pre>
 include('Router.php');
 
-class foo
-{
-    public function bar( $args )
-    {
-        echo $args[':id'];
-    }
-}
+Router::setControllersPath('/path/to/controllers', '.php');
 
 try {
-    Router::addRoute('foo/bar/:id', array (
-        'controller' => 'foo',
-        'action'     => 'bar',
-        'args'       => array(':id' => NULL)
+    Router::addRoute(':controller/:action/:id', array (
+        'controller' => ':controller',
+        'action'     => ':action',
+        'args'       => array(':controller' => NULL, ':action' => NULL, ':id' => NULL)
     ));
 } catch (Exception $e) {
     echo $e;
 }
 
-Router::mapUrlRequest();
+Router::matchMap($_SERVER['REQUEST_URI']);
         </pre>
-        <h2>Example using routes.php file</h2>
+        
+        <h2>Example index.php using routes.php file</h2>
         <pre>
 include('Router.php');
+
+Router::setControllersPath('/path/to/controllers', '.php');
 
 //Specify the location of the routes.php file
 Router::autoLoadRoutes( '/path/to/your/routes.php' );
 
-Router::mapUrlRequest();
+Router::matchMap($_SERVER['REQUEST_URI']);
         </pre>
         <h2>The default dispatcher</h2>
         <p>
@@ -245,6 +243,7 @@ class customDispatcher
     }
 }
 
+Router::setControllersPath('/path/to/controllers');
 Router::autoLoadRoutes( '/path/to/your/routes.php' );
 
 //You can use the class statically...
@@ -254,20 +253,23 @@ Router::setDispatcher( 'customDispatcher', 'dispatch' );
 $custom_dispatcher = new customDispatcher();
 Router::setDispatcher( $custom_dispatcher, 'dispatch' );
 
-Router::mapUrlRequest();
+Router::matchMap($_SERVER['REQUEST_URI']);
         </pre>
-        <h2>Class auto loader</h2>
+
         <p>
-            A method, Router::enableClassAutoLoader, is provided. This will automatically
-            load your controller class during dispatch and prevent you from having to
-            include or require in your controller class files as long as:<br />
-            1) the file name matches the class name (i.e. mycontroller class name,
-            mycontroller.php file name)<br />
-            2) the controller class directory is in the includes path.
+            VERY IMPORTANT! When creating your own dispatcher, make sure you
+            take proper steps to secure the code and not allow arbitrary files
+            to be required in. Any dynamic elements matched will be passed to
+            your custom dispatcher from the wild unaltered.
         </p>
-        <p>
-        Just make sure to call Router::enableClassAutoLoader before Router::mapUrlRequest.
-        </p>
+
+        <h2>Debugging</h2>
+
+        <p>The method getErrors() is provided to help debug routing errors:</p>
+
+        <pre>
+print_r( Router::getErrors() );
+        </pre>
 
         <h2>License</h2>
         <p>
