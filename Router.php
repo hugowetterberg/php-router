@@ -18,28 +18,77 @@
 abstract class Router
 {
     /**
-     *
+     * Stores the route maps
      * @var array
+     * @static
+     * @access private
      */
     private static $routeMaps = array();
 
     /**
-     *
+     * The path to the routes file.
      * @var string
+     * @static
+     * @access private
      */
-    private static $routesFilePath = '../config/routes.php';
+    private static $routesFilePath;
 
     /**
-     *
+     * The path to the controllers
+     * @var string
+     * @static
+     * @access private
+     */
+    private static $controllerPath;
+
+    /**
+     * The controller suffix; i.e. '.class.php', '.php', etc
+     * @var string
+     * @access private
+     * @static
+     */
+    private static $controllerSuffix = 'Controller.php';
+
+    /**
+     * Stores the requested url/path
+     * @var string
+     * @access private
+     * @static
+     */
+    private static $requestedUrl;
+
+    /**
+     * If set, stores an array with keys 'class' and 'method', else empty array.
+     * Used to call a custom dispatcher with class::method( $args )
      * @var array
+     * @static
+     * @access private
      */
     private static $customDispatcher = array();
 
     /**
+     * If set, stores an array with keys 'class' and 'method', else empty array.
+     * Used to call a custom page not found class::method
+     * @var array
+     */
+    private static $customPageNotFoundHandler = array();
+
+    /**
+     * Stores error messages
+     * @var array
+     * @static
+     * @access private
+     */
+    private static $errors = array();
+
+    /**
      * Adds a route to the list of possible routes
-     * @param string $path
-     * @param array $map
+     * @param string $path In the form: 'my/path'
+     * @param array $map required keys: 'controller', 'action', 'args'
      * @throws Exception
+     * @static
+     * @access public
+     * @return void
      */
     public static function addRoute($path, $map)
     {
@@ -55,13 +104,13 @@ abstract class Router
     /**
      * Auto Load routes using Router::$routesFilePath
      * @param string $path
+     * @static
+     * @access public
+     * @return void
      */
-    public static function autoLoadRoutes( $path = NULL )
+    public static function autoLoadRoutes( $path )
     {
-        if( NULL !== $path )
-            self::$routesFilePath = $path;
-
-        require_once( self::$routesFilePath );
+        require( self::$routesFilePath );
 
         try
         {
@@ -77,46 +126,26 @@ abstract class Router
     }
 
     /**
-     * Enables the class autoloader
-     */
-    public static function enableClassAutoLoader()
-    {
-        spl_autoload_register('Router::classAutoLoader' );
-    }
-
-    /**
-     * This method will be registered by calling Router::enableClassAutoLoader()
-     * When registered, it will attempt to auto load classes in files named
-     * classname.php. There is no point in calling this method yourself.
-     *
-     * @param string $class
-     */
-    public static function classAutoLoader( $class )
-    {
-        @include_once($class . '.php');
-    }
-
-    /**
-     * Maps the current url request to any or sets header 404
-     */
-    public static function mapUrlRequest()
-    {
-        $url = ereg_replace('^/', '', $_SERVER['REQUEST_URI']);
-        if( FALSE === self::matchMap($url) )
-            header("HTTP/1.0 404 Not Found");
-    }
-
-    /**
      * Finds a maching route in the map using path
      * @param string $path
      * @return boolean
+     * @static
+     * @access public
      */
     public static function matchMap( $path )
     {
+        self::$requestedUrl = $path;
+
+        //Remove any preceding slash from the url path. It would cause problems
+        // when splitting later.
+        $path = ereg_replace('^/', '', $path);
+
+        //Split the path up so that each element can be worked on
         $path_parts = split('/', $path);
         $path_parts_count = count($path_parts);
 
-        //It may be a static map, check first by matching the $path verbatim
+        //There may be a static map for the path, check first by matching the
+        // $path verbatim
         if( array_key_exists($path, self::$routeMaps) )
         {
             //This is a possible static routeMap, to be sure,
@@ -249,7 +278,8 @@ abstract class Router
         }
         else
         {
-
+            //If a custom page not found handler is specfied, use it
+            self::callCustomPageNotFoundHandler($path);
             return FALSE;
         }
     }
@@ -260,9 +290,13 @@ abstract class Router
      * @param string $action
      * @param array $args
      * @return boolean
+     * @access private
+     * @static
      */
     private static function dispatch( $controller, $action, $args )
     {
+        //When a custom dispatcher is specified, use it. The remaining code
+        // in this method is ignored.
         if( count(self::$customDispatcher) > 0 )
         {
             return call_user_func_array(
@@ -272,28 +306,148 @@ abstract class Router
             );
         }
 
-        if( class_exists($controller) )
+        //Because the controller could have been matched as a dynamic element,
+        // it would mean that the value in $controller is untrusted. Therefore,
+        // it may only contain alphanumeric characters. Anything not matching
+        // the regexp is considered potentially harmful.
+        preg_match("/^[a-zA-Z0-9_-]+$/", $controller, $matches);
+        if( count($matches) !== 1 )
         {
-            if( method_exists($controller, $action))
-                call_user_func(array($controller, $action), $args);
-            else
-                return FALSE;
+            self::$errors[] = "An invalid character was found in the controller name {$controller}";
+            self::callCustomPageNotFoundHandler(self::$requestedUrl);
+            return FALSE;
+        }
+
+        //Determine the file name
+        $file = $controller . self::$controllerSuffix;
+        $file_path = self::$controllerPath . '/';
+        $file_name = $file_path . $file;
+
+        //The controller class should be in a file named something like;
+        // '{$controller}.class.php' or '{$controller}Controller.php'.
+        //In order to determine what the controller name should be,
+        // append any part of the suffix before the first '.' to the controller
+        // name.
+        $suffix_parts = explode('.', self::$controllerSuffix);
+        $controller .= $suffix_parts[0];
+        
+        //If the file name does not end in '.php', it is a potential security
+        // problem. Although this is set by the developer and not a user, it
+        // is still considered potentially harmful if the developer does not
+        // use the .php extension in the suffix.
+        if( 'php' !== $suffix_parts[count($suffix_parts)-1] )
+        {
+            self::$errors[] = "The derived controller file name {$file} does not end in '.php'";
+            self::callCustomPageNotFoundHandler(self::$requestedUrl);
+            return FALSE;
+        }
+
+        //At this point, we are relatively assured that the file name is safe
+        // to check for it's existence and require in.
+        if( FALSE === file_exists($file_name) )
+        {
+            self::$errors[] = "Tried to dispatch but could not find the controller file {$file_name}";
+            self::callCustomPageNotFoundHandler(self::$requestedUrl);
+            return FALSE;
         }
         else
         {
+            require_once($file_name);
+        }
+
+        //Check for the controller class
+        if( FALSE === class_exists($controller) )
+        {
+            self::$errors[] = "The class {$controller} could not be found";
+            self::callCustomPageNotFoundHandler($url);
+            return FALSE;
+
+
+        }
+
+        //Check for the method
+        if( FALSE === method_exists($controller, $action))
+        {
+            self::$errors[] = "The method {$action} could not be found";
+            self::callCustomPageNotFoundHandler(self::$requestedUrl);
             return FALSE;
         }
-        return TRUE;
+
+        //All above checks should have confirmed that the controller and action
+        // can be called
+        return call_user_func(array($controller, $action), $args);
     }
 
     /**
-     *
-     * @param mixed $class - class name or object
-     * @param string $method - name of dispatch method
+     * Sets a custom dispatcher
+     * @param mixed $class the class name or object
+     * @param string $method the name of dispatch method
+     * @static
+     * @access public
+     * @return void
      */
-    public function setDispatcher( $class, $method )
+    public static function setDispatcher( $class, $method )
     {
         self::$customDispatcher = array( 'class' => $class, 'method' => $method);
+    }
+
+    /**
+     * Sets the page not found handler. The custom handler should accept the path
+     * as an argument.
+     * @param mixed $class the class name of the handler or an instance
+     * @param string $method the method in the class or object to invoke
+     * @access public
+     * @static
+     * @return void
+     */
+    public static function setPageNotFoundHandler( $class, $method )
+    {
+        self::$customPageNotFoundHandler = array( 'class' => $class, 'method' => $method);
+    }
+
+    /**
+     * If set, calls the custom page not found handler and passes $path
+     * @param string $path
+     * @access private
+     * @return void
+     * @static
+     */
+    private static function callCustomPageNotFoundHandler( $path )
+    {
+        if( count(self::$customPageNotFoundHandler) > 0 )
+        {
+            call_user_func(array(
+                self::$customPageNotFoundHandler['class'],
+                self::$customPageNotFoundHandler['method']
+            ), $path);
+        }
+    }
+
+    /**
+     * Sets the path to the controller classes
+     * @param string $path
+     * @param string $suffix The suffix to append to the controller file name
+     * when including. The default is 'Controller.php'. The substring before the
+     * first '.' gets appended to the controller name.
+     * @access public
+     * @return void
+     */
+    public static function setControllersPath( $path, $suffix = NULL )
+    {
+        self::$controllerPath = $path;
+        if( NULL !== $suffix )
+            self::$controllerSuffix = $suffix;
+    }
+
+    /**
+     * Gets the errors array. Use for debugging only!
+     * @return array
+     * @access public
+     * @static
+     */
+    public static function getErrors()
+    {
+        return self::$errors;
     }
 }
 ?>
