@@ -42,16 +42,16 @@ abstract class Router
     private static $controllerSuffix = 'Controller.php';
 
     /**
-     * Stores the requested url/path
+     * Stores the requested path
      * @var string
      * @access private
      * @static
      */
-    private static $requestedUrl;
+    private static $requestedPath;
 
     /**
      * If set, stores an array with keys 'class' and 'method', else empty array.
-     * Used to call a custom dispatcher with class::method( $args )
+     * Used to call a custom dispatcher with class::method( $dynamic )
      * @var array
      * @static
      * @access private
@@ -60,10 +60,10 @@ abstract class Router
 
     /**
      * If set, stores an array with keys 'class' and 'method', else empty array.
-     * Used to call a custom page not found class::method
+     * Used to call a custom uri error handler class::method
      * @var array
      */
-    private static $customPageNotFoundHandler = array();
+    private static $customUriErrorHandler = array();
 
     /**
      * Stores error messages
@@ -76,7 +76,7 @@ abstract class Router
     /**
      * Adds a route to the list of possible routes
      * @param string $path In the form: 'my/path'
-     * @param array $map required keys: 'controller', 'action', 'args'
+     * @param array $map required keys: 'controller', 'action', 'dynamic'
      * @throws Exception
      * @static
      * @access public
@@ -87,7 +87,7 @@ abstract class Router
         //verify that all array keys exist
         if(!isset($map['controller'])) throw new Exception("key 'controller' not found when adding route");
         if(!isset($map['action'])) throw new Exception("key 'action' not found when adding route");
-        if(!isset($map['args'])) throw new Exception("key 'args' not found when adding route");
+        if(!isset($map['dynamic'])) throw new Exception("key 'dynamic' not found when adding route");
 
         //eg $path = '/<controller>/:action/:id'
         self::$routeMaps[$path] = $map;
@@ -126,9 +126,14 @@ abstract class Router
      */
     public static function matchMap( $path )
     {
-        self::$requestedUrl = $path;
+        //remove any query portion of the path
+        $initial_path_split = explode('?', $path);
+        if( TRUE === isset($initial_path_split[0]) )
+            $path = $initial_path_split[0];
 
-        //Remove any preceding slash from the url path. It would cause problems
+        self::$requestedPath = $path;
+
+        //Remove any preceding slash from the uri path. It would cause problems
         // when splitting later.
         $path = ereg_replace('^/', '', $path);
 
@@ -141,13 +146,13 @@ abstract class Router
         if( array_key_exists($path, self::$routeMaps) )
         {
             //This is a possible static routeMap, to be sure,
-            // check the count of the args sub array
-            if( 0 === count(self::$routeMaps[$path]['args']) )
+            // check the count of the dynamic sub array
+            if( 0 === count(self::$routeMaps[$path]['dynamic']) )
             {
                 return self::dispatch(
                         self::$routeMaps[$path]['controller'],
                         self::$routeMaps[$path]['action'],
-                        self::$routeMaps[$path]['args']
+                        self::$routeMaps[$path]['dynamic']
                 );
             }
 
@@ -159,10 +164,10 @@ abstract class Router
         foreach( self::$routeMaps as $route_map_path => $route_map )
         {
             //Any static maps here are ignored because any match would have
-            // been caught earlier, so empty args arrays are static and must
+            // been caught earlier, so empty dynamic arrays are static and must
             // be ignored.
-            $args = $route_map['args'];
-            if( 0 === count($args) )
+            $dynamic = $route_map['dynamic'];
+            if( 0 === count($dynamic) )
                 continue;
 
             //In order to be a possible match, the array counts must
@@ -199,15 +204,15 @@ abstract class Router
 
             //Now check any dynamic elements for matches
             $dynamic_element_match = TRUE;
-            $args_match = array();
+            $dynamic_match = array();
             foreach( $dynamic_route_elements as $k => $dynamic_route_element )
             {
-                 $regexp = $args[$dynamic_route_element];
+                 $regexp = $dynamic[$dynamic_route_element];
 
                  //NULL regexp specfied in the map match anything
                  if( NULL === $regexp )
                  {
-                    $args_match[$route_map_path_parts[$k]] = $path_parts[$k];
+                    $dynamic_match[$route_map_path_parts[$k]] = $path_parts[$k];
                     continue;
                  }
 
@@ -215,7 +220,7 @@ abstract class Router
                  // of the current iteration
                  if( preg_match($regexp, $path_parts[$k]) > 0 )
                  {
-                    $args_match[$route_map_path_parts[$k]] = $path_parts[$k];
+                    $dynamic_match[$route_map_path_parts[$k]] = $path_parts[$k];
                  }
                  else
                  {
@@ -231,11 +236,11 @@ abstract class Router
             $action_array = array();
             foreach( $route_map as $k => $route_map_element )
             {
-                if( 'args' === $k )
+                if( 'dynamic' === $k )
                 {
                     foreach( $route_map_element as $kk => $v )
                     {
-                        $action_array[$k][$kk] = $args_match[$kk];
+                        $action_array[$k][$kk] = $dynamic_match[$kk];
                     }
                 }
                 else
@@ -256,36 +261,36 @@ abstract class Router
             // find those and replace with the correct values
             foreach( $action_array as $k => $v )
             {
-                if( FALSE === is_array($v) && TRUE === array_key_exists($v, $action_array['args']) )
+                if( FALSE === is_array($v) && TRUE === array_key_exists($v, $action_array['dynamic']) )
                 {
-                    $action_array[$k] = $action_array['args'][$v];
+                    $action_array[$k] = $action_array['dynamic'][$v];
                 }
             }
 
             return self::dispatch(
                     $action_array['controller'],
                     $action_array['action'],
-                    $action_array['args']
+                    $action_array['dynamic']
             );
         }
         else
         {
-            //If a custom page not found handler is specfied, use it
-            self::callCustomPageNotFoundHandler($path);
+            //If a custom url error handler is specfied, use it
+            self::callUriErrorHandler(404, $path);
             return FALSE;
         }
     }
 
     /**
-     * Dispatches controller, action, args
+     * Dispatches controller, action, dynamic
      * @param string $controller
      * @param string $action
-     * @param array $args
+     * @param array $dynamic
      * @return boolean
      * @access private
      * @static
      */
-    private static function dispatch( $controller, $action, $args )
+    private static function dispatch( $controller, $action, $dynamic )
     {
         //When a custom dispatcher is specified, use it. The remaining code
         // in this method is ignored.
@@ -294,7 +299,7 @@ abstract class Router
             return call_user_func_array(
                 array( self::$customDispatcher['class'], 
                        self::$customDispatcher['method']), 
-                array($controller, $action, $args)
+                array($controller, $action, $dynamic)
             );
         }
 
@@ -306,7 +311,7 @@ abstract class Router
         if( count($matches) !== 1 )
         {
             self::$errors[] = "An invalid character was found in the controller name {$controller}";
-            self::callCustomPageNotFoundHandler(self::$requestedUrl);
+            self::callUriErrorHandler(400, self::$requestedPath);
             return FALSE;
         }
 
@@ -330,7 +335,7 @@ abstract class Router
         if( 'php' !== $suffix_parts[count($suffix_parts)-1] )
         {
             self::$errors[] = "The derived controller file name {$file} does not end in '.php'";
-            self::callCustomPageNotFoundHandler(self::$requestedUrl);
+            self::callUriErrorHandler(500, self::$requestedPath);
             return FALSE;
         }
 
@@ -339,7 +344,7 @@ abstract class Router
         if( FALSE === file_exists($file_name) )
         {
             self::$errors[] = "Tried to dispatch but could not find the controller file {$file_name}";
-            self::callCustomPageNotFoundHandler(self::$requestedUrl);
+            self::callUriErrorHandler(500, self::$requestedPath);
             return FALSE;
         }
         else
@@ -351,23 +356,21 @@ abstract class Router
         if( FALSE === class_exists($controller) )
         {
             self::$errors[] = "The class {$controller} could not be found";
-            self::callCustomPageNotFoundHandler($url);
+            self::callUriErrorHandler(500, $url);
             return FALSE;
-
-
         }
 
         //Check for the method
         if( FALSE === method_exists($controller, $action))
         {
             self::$errors[] = "The method {$action} could not be found";
-            self::callCustomPageNotFoundHandler(self::$requestedUrl);
+            self::callUriErrorHandler(500, self::$requestedPath);
             return FALSE;
         }
 
         //All above checks should have confirmed that the controller and action
         // can be called
-        return call_user_func(array($controller, $action), $args);
+        return call_user_func(array($controller, $action), $dynamic);
     }
 
     /**
@@ -392,26 +395,27 @@ abstract class Router
      * @static
      * @return void
      */
-    public static function setPageNotFoundHandler( $class, $method )
+    public static function setErrorHandler( $class, $method )
     {
-        self::$customPageNotFoundHandler = array( 'class' => $class, 'method' => $method);
+        self::$customUriErrorHandler = array( 'class' => $class, 'method' => $method);
     }
 
     /**
-     * If set, calls the custom page not found handler and passes $path
+     * If set, calls the custom uri error handler and passes $error_code & $path
+     * @param int $error_code - the http error code (i.e. 404,
      * @param string $path
      * @access private
      * @return void
      * @static
      */
-    private static function callCustomPageNotFoundHandler( $path )
+    private static function callUriErrorHandler( $error_code, $path )
     {
-        if( count(self::$customPageNotFoundHandler) > 0 )
+        if( count(self::$customUriErrorHandler) > 0 )
         {
-            call_user_func(array(
-                self::$customPageNotFoundHandler['class'],
-                self::$customPageNotFoundHandler['method']
-            ), $path);
+            call_user_func_array(array(
+                self::$customUriErrorHandler['class'],
+                self::$customUriErrorHandler['method']
+            ), array($error_code, $path));
         }
     }
 
