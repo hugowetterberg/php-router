@@ -69,8 +69,9 @@
         </p>
         <p>
             This class is abstract and as such, will not be instantiated.
-            This is simply my personal preference for classes that will never
-            have more than one instance during runtime.
+            This is simply my personal preference for classes that never
+            have more than one instance during runtime and do not extend a super
+            class.
         </p>
 
         <h2>Dependencies</h2>
@@ -97,6 +98,14 @@
             </li>
         </ol>
         <h2>Routing Theory</h2>
+        <p>
+            Routes are added to the Router class. When the Router::matchMap()
+            method is called, it searches through the defined routes and attempts
+            to find a match. Once a complete match is found, the request is
+            dispatched to the specified controller action and no further matching
+            is attempted. Therefore, matching is performed in the order in which
+            the <a href="#adding_routes">routes have been added</a>.
+        </p>
         <p>
             There are two components to a route: the route <i>path</i> and the route
             <i>map</i>.
@@ -134,7 +143,7 @@
             &quot;controller&quot;, &quot;action&quot;, and &quot;dynamic&quot;.
         </p>
         <p>
-            The controller key value the name of the class to use.
+            The controller key value is the name of the class to use.
             You may or may not define this as a &quot;controller&quot;
             in your framework but it really does not matter.
         </p>
@@ -167,7 +176,7 @@ class partsController
 
         <p>
             You want to call &apos;partsController::show( $args )&apos;
-            when the following uri path is used:
+            when the following uri path is specified:
         </p>
 
         <pre>"/parts/show/908"</pre>
@@ -183,7 +192,7 @@ $part_route = array('/parts/show/:id' => array (
 ?&gt;</pre>
         
         <p>
-            Although this route would do the same thing (more on default
+            However, the following route would do the same thing (more on default
             routes later):
         </p>
 <pre>&lt;?php
@@ -196,13 +205,8 @@ $default_route = array('/:controller/:action/:id' => array (
         
         <h3>Dynamic elements</h3>
         <p>
-            Dynamic element values can be either NULL, which will match anything or a string
-            which represents a regular expression. The regular expression is evaluated using
-            php's preg_match function. So any valid regex will work. Some common regex's:
-        <br /><br />
-            '/^\d+$/'    : must be a number<br />
-            '/^\d{4}$/'  : must be a 4 digit number<br />
-            '/^abc\d+$/' : must be a string begining with 'abc' and ending in numbers<br />
+            Dynamic element values can be the php keyword NULL, which will
+            match anything. They can also be regular expression strings.
         </p>
 
         <p>
@@ -235,7 +239,7 @@ $default_route = array('/:controller/:action/:id' => array (
             </ol>
         </p>
 
-        <h2>Adding routes</h2>
+        <h2><a name="adding_routes">Adding routes</a></h2>
         <p>
             You can add routes all at once by using the Router::autoLoadRoutes method.
             This might be the preferrable way to add routes if you have many routes
