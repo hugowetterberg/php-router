@@ -59,19 +59,21 @@
             a php routing class
         </div>
 
+        <h2>Introduction</h2>
         <p>
             The php router class is designed to help you with php routing by mapping
             so called &quot;pretty&quot; url&rsquo;s to class::methods that reside in your
-            framework. It is not in itself a framework. To use it, you will need
+            framework. It adopts a
+            <a href="http://en.wikipedia.org/wiki/Front_Controller_pattern">
+            front controller</a> pattern.
+            It is not in itself a framework. To use it, you will need
             to create a index/bootstrap file and configure apache to route requests
             there. Included is a sample.htaccess file which you can copy into your
             apache public directory along with your index/bootstrap file.
         </p>
         <p>
-            This class is abstract and as such, will not be instantiated.
-            This is simply my personal preference for classes that never
-            have more than one instance during runtime and do not extend a super
-            class.
+            It is intended that this class be portable and flexible enough to
+            include in your own framework (MVC) or otherwise.
         </p>
 
         <h2>Dependencies</h2>
@@ -219,9 +221,15 @@ $default_route = array('/:controller/:action/:id' => array (
         <h3>When a matching route is found</h3>
 
         <p>
-            Matched routes are sent to a dispatch method which attempts to
-            require your controller class file and call your controller::action.
-            If not successful for a variety of reasons, two things happen:
+            <ol>
+                <li>If a custom dispatcher is set, it is called. Otherwise:</li>
+                <li>The router class' internal dispatcher is called</li>
+                <li>The internal dispatcher appends the controller suffix
+                    to the controller name and requires the file in.</li>
+                <li>The controller::action method is called and the matched
+                    dynamic array is passed to it.</li>
+            </ol>
+            If any of the above is not successful for a variety of reasons:
             <ol>
                 <li>A class error is set</li>
                 <li>Your error handling class and method are called (if
@@ -231,7 +239,7 @@ $default_route = array('/:controller/:action/:id' => array (
 
         <h3>When a matching route is <i>not</i> found</h3>
         <p>
-            Unmatched routes will invoke these two actions:
+            Unmatched routes will invoke these actions:
             <ol>
                 <li>A class error is set</li>
                 <li>Your error handling class and method are called (if
@@ -242,10 +250,12 @@ $default_route = array('/:controller/:action/:id' => array (
         <h2><a name="adding_routes">Adding routes</a></h2>
         <p>
             You can add routes all at once by using the Router::autoLoadRoutes method.
+            This works by creating a separate file containing an array of routes.
+            You pass the routes file path to the autoLoadRoutes method.
             This might be the preferrable way to add routes if you have many routes
             to define.
         </p>
-        <p>Example:</p>
+        <p>Autoload Example:</p>
         <pre>Router::autoLoadRoutes('/path/to/my/routes/file')</pre>
         <p>
             The other method of adding routes is to use the Router::addRoute 
@@ -253,9 +263,10 @@ $default_route = array('/:controller/:action/:id' => array (
             the second argument is the route map array. If you only have a few
             routes or even one default route, this may be easier than creating
             a routes file and using the autoLoadRoutes method.
-            For example:
         </p>
-        
+        <p>
+            One at a time Example:
+        </p>
 <pre>try {
     Router::addRoute('/my/path/:year/:id', array (
         'controller' => 'controllerclass',
@@ -277,6 +288,29 @@ $default_route = array('/:controller/:action/:id' => array (
             and 'dynamic' keys are not present in the second argument. Even if you are creating
             a static map with no dynamic elements, the dynamic key must contain an empty array.
         </p>
+
+        <h2>Sample routes.php</h2>
+        <p>
+            The routes file (if you use one) must contain an array stored in a variable
+            named "$routes" and should be in the format:
+        </p>
+
+<pre>&lt;?php
+$routes = array (
+    'foo/bar/:id' => array (
+        'controller' => 'foo',
+        'action'     => 'bar',
+        //This map will match id's that contain numbers only
+        'dynamic'       => array(':id' => '/^\d+$/')
+    ),
+    //You may define a catch all map. It should go last in the array.
+    ':controller/:action/:id' => array (
+        'controller' => ':controller',
+        'action'     => ':action',
+        'dynamic'       => array(':controller' => NULL, ':action' => NULL, ':id' => NULL)
+    )
+);
+?&gt;</pre>
 
         <h2>Debugging Routes</h2>
         <p>
@@ -322,36 +356,17 @@ Router::setErrorHandler('UriError', 'show');
             You can optionally specify a suffix that you might be using in
             your controller name convention. For example, if your controller
             names end in 'Controller', you might specify
-            a suffix of 'Controller.php'. For example:
+            a suffix of 'Controller.php' (this is the default). For example:
         </p>
         <pre>&lt;?php
 Router::setControllersPath('/path/to/controllers', 'Controller.php');
 ?&gt;</pre>
-
-        <h2>Sample routes.php</h2>
-        <p>
-            The routes file (if you use one) must contain an array stored in a variable
-            named "$routes" and should be in the format:
-        </p>
-        
-<pre>&lt;?php
-$routes = array (
-    'foo/bar/:id' => array (
-        'controller' => 'foo',
-        'action'     => 'bar',
-        //This map will match id's that contain numbers only
-        'dynamic'       => array(':id' => '/^\d+$/')
-    ),
-    //You may define a catch all map. It should go last in the array.
-    ':controller/:action/:id' => array (
-        'controller' => ':controller',
-        'action'     => ':action',
-        'dynamic'       => array(':controller' => NULL, ':action' => NULL, ':id' => NULL)
-    )
-);
-?&gt;</pre>
         
         <h2>Basic index.php Example</h2>
+        <p>
+            A very basic index.php/bootstrap file may look something like the
+            following.
+        </p>
         
 <pre>&lt;?php
 include('Router.php');
@@ -373,7 +388,12 @@ Router::matchMap($_SERVER['REQUEST_URI']);
         
         
         <h2>Example index.php using routes.php file</h2>
-        
+
+        <p>
+            This example moves your routes into a separate routes file and then
+            auto loads them.
+        </p>
+
 <pre>&lt;?php
 include('Router.php');
 
@@ -454,13 +474,20 @@ Router::matchMap($_SERVER['REQUEST_URI']);
             your custom dispatcher from the wild and unaltered.
         </p>
 
-        <h2>Debugging</h2>
-
-        <p>The method getErrors() is provided to help debug routing errors:</p>
-
-        
-<pre>print_r( Router::getErrors() );</pre>
-       
+        <h2>Other php routing classes</h2>
+        <ul>
+            <li>
+                <a href="http://allseeing-i.com/Bare-bones-Rails-style-MVC-Request-Router-for-PHP">
+                        Bare-bones Rails-style MVC Request Router for PHP
+                </a> A very nice php MVC router
+            </li>
+            <li>
+                <a href="http://pear.php.net/package/Net_URL_Mapper">Net URL Mapper</a>
+                Don't know much about this one.
+            </li>
+            <li>And of course, there are many php frameworks each with their own
+            routing systems.</li>
+        </ul>
 
         <h2>License</h2>
         <p>
