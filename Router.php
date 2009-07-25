@@ -275,6 +275,7 @@ abstract class Router
         }
         else
         {
+            self::$errors[] = 'Failed to find matching route';
             //If a custom url error handler is specfied, use it
             self::callUriErrorHandler(404, $path);
             return FALSE;
