@@ -99,6 +99,7 @@ abstract class Router
      * @static
      * @access public
      * @return void
+     * @todo Rethink and rework the usage of $routes in the included file
      */
     public static function autoLoadRoutes( $routes_file )
     {
@@ -209,8 +210,8 @@ abstract class Router
             {
                  $regexp = $dynamic[$dynamic_route_element];
 
-                 //NULL regexp specfied in the map match anything
-                 if( NULL === $regexp )
+                 // '*' anything specfied in the map match anything
+                 if( '*' === $regexp )
                  {
                     $dynamic_match[$route_map_path_parts[$k]] = $path_parts[$k];
                     continue;
@@ -240,8 +241,18 @@ abstract class Router
                 {
                     foreach( $route_map_element as $kk => $v )
                     {
-                        $action_array[$k][$kk] = $dynamic_match[$kk];
+                        //Include only keys which are not :action or :controller
+                        // anything else is fair game to pass into the controller
+                        // action as the argument array
+                        if( ':action' !== $kk && ':controller' !== $kk )
+                            $action_array[$k][$kk] = $dynamic_match[$kk];
                     }
+                }
+                else if( ':action' === $route_map_element || ':controller' === $route_map_element )
+                {
+                    //Replace the dynamic action or controller with their
+                    // respective values
+                    $action_array[$k] = $dynamic_match[$route_map_element];
                 }
                 else
                 {
@@ -257,16 +268,6 @@ abstract class Router
 
         if( count($action_array) > 0 )
         {
-            //there may be elments other than arguments which are dynamic
-            // find those and replace with the correct values
-            foreach( $action_array as $k => $v )
-            {
-                if( FALSE === is_array($v) && TRUE === array_key_exists($v, $action_array['dynamic']) )
-                {
-                    $action_array[$k] = $action_array['dynamic'][$v];
-                }
-            }
-
             return self::dispatch(
                     $action_array['controller'],
                     $action_array['action'],
@@ -290,6 +291,7 @@ abstract class Router
      * @return boolean
      * @access private
      * @static
+     * @todo break dispatch out into it's own class
      */
     private static function dispatch( $controller, $action, $dynamic )
     {
