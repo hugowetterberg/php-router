@@ -1,7 +1,7 @@
 <?php
 
 require_once('PHPUnit/Framework.php');
-require_once('../Route.php');
+require_once('../src/Route.php');
 
 class RouteTest extends PHPUnit_Framework_TestCase
 {

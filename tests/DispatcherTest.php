@@ -1,7 +1,7 @@
 <?php
 require_once('PHPUnit/Framework.php');
-require_once('../Dispatcher.php');
-require_once('../Route.php');
+require_once('../src/Dispatcher.php');
+require_once('../src/Route.php');
 
 class DispatcherTest extends PHPUnit_Framework_TestCase
 {

@@ -1,8 +1,8 @@
 <?php
 
 require_once('PHPUnit/Framework.php');
-require_once('../Route.php');
-require_once('../Router.php');
+require_once('../src/Route.php');
+require_once('../src/Router.php');
 
 class RouterTest extends PHPUnit_Framework_TestCase
 {
