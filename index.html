@@ -57,23 +57,21 @@
             <span class="small">by <a href="http://github.com/robap">robap</a></span>
         </h1>
         <div class="description">
-            a php routing class
+            a php routing system
         </div>
 
         <h2>Introduction</h2>
         <p>
-            The php router class is designed to help you with php routing by mapping
+            The php router system is designed to help you with php routing by mapping
             so called &quot;pretty&quot; url&rsquo;s to class::methods that reside in your
-            framework. It adopts a
+            framework. It adopts the
             <a href="http://en.wikipedia.org/wiki/Front_Controller_pattern">
-            front controller</a> pattern.
-            It is not in itself a framework. To use it, you will need
-            to create a index/bootstrap file and configure apache to route requests
-            there. Included is a sample.htaccess file which you can copy into your
-            apache public directory along with your index/bootstrap file.
+            front controller</a> pattern in which all requests are passed through
+            a centralized location. That centralized location then can use this
+            Routing system to pass control to some other part of your framework.
         </p>
         <p>
-            It is intended that this class be portable and flexible enough to
+            It is intended that this system be portable and flexible enough to
             include in your own framework (MVC or otherwise). Hopefully, you
             find it useful.
         </p>
@@ -91,7 +89,8 @@
         <h2>Install</h2>
         <ol>
             <li>
-                Copy Router.php to some place accessible by your framework and include it.
+                Copy the contents of src/ to some place accessible by your
+                framework and include Router.php.
             </li>
             <li>
                 Create your index.php file and Tell apache to route requests
@@ -105,378 +104,225 @@
                 section below).
             </li>
             <li>
-                Call Router::matchMap(); at the end of
-                your index.php file.
+                Call Router::findRoute(); and pass the result to a Dispatcher
+                object. A Dispatcher class is included but you can also create
+                your own.
             </li>
         </ol>
         <h2>Routing Theory</h2>
         
         <p>
-            Routes are added to the Router class. When the Router::matchMap()
+            Routes are added to the Router class. When the Router::findRoute()
             method is called, it searches through the defined routes and attempts
-            to find a match. Once a complete match is found, the request is
-            dispatched to the specified controller action and no further matching
-            is attempted. Therefore, matching is performed in the order in which
+            to find a match. If a match is found, a route object is returned.
+            This route object can then be dispatched. Matching is performed in
+            the order in which
             the <a href="#adding_routes">routes have been added</a>.
         </p>
         <p>
-            There are two components to a route: the route <i>path</i> and the route
-            <i>map</i>.
+            A Route is comprised of two main components:
+            the route <i>path</i> and the route <i>map</i>.
         </p>
         <h3>Route Paths</h3>
         <p>
             The route path is a template that represents a relative uri that you
             would like to match. It is made up of <i>static</i> or <i>dynamic</i>
-            elements which are separated by a &quot;/&quot;. A preceding slash
-            is not used.
+            elements which are separated by a &quot;/&quot;.
         </p>
         <p>
-            Static elements are hard wired parts of the path. For example,
-            &quot;users&quot;, &quot;books&quot;, and &quot;parts&quot;
-            are considered static elements. In order for a static element to be
-            matched, that portion of the requested uri path must be exactly
-            (case sensitive) the same.
+            <i>Static</i> elements are hard wired parts of the path. The are not
+            substituted with variables. They either match the map or they do not.
         </p>
         <p>
-            Dynamic elements are the portions of the path that you use to match
-            different types of variables. This allows you to create Routes for
+            <i>Dynamic</i> elements are the portions of the path that are
+            substituted with a variable which could be anything supplied in
+            the url or may have to match a regular expression.
+            This allows you to create Routes for
             virtually any sort of url.
-            Dynamic elements are denoted by a preceding &quot;:&quot;.
-            Typical dynamic elements might be &quot;:controller&quot;,
-            &quot;:action&quot;, and &quot;:id&quot; but these names are completely
-            arbitrary and can be anything you wish.
         </p>
         <h3>Route Maps</h3>
         <p>
-            Route maps define where a matched route map should be dispatched to.
-            They also define how dynamic elements will be matched.
-        </p>
-        <p>
-            A single route map is an array made up of three associative keys:
-            &quot;controller&quot;, &quot;action&quot;, and &quot;dynamic&quot;.
-        </p>
-        <p>
-            The controller key value is the name of the class to use.
-            You may or may not define this as a &quot;controller&quot;
-            in your framework but it really does not matter.
-        </p>
-        <p>
-            The action key value is the name of the class method to call. The
-            controller action is called statically...no instance is created.
-        </p>
-        <p>
-            The dynamic key value is a sub array of the key value pairs that
-            define your dynamic elements. This sub array is passed to your
-            controller::action as an argument. It must contain keys which
-            match all of the dynamic elements in your route path.
-        </p>
-        <p>
-            Let&apos;s look at an example. Suppose you have a controller class:
-        </p>
-        <pre>&lt;?php
-// file: partsController.php
-class partsController
-{
-    public function show ( array $args )
-    {
-        //The contents of $args is passed with little or no
-        // safeguarding by the Router class. Treat the contents
-        // as you would all unsafe data from the user
-        echo "Show part {$args[':id']}";
-    }
-}
-?&gt;</pre>
-
-        <p>
-            You want to call &apos;partsController::show( $args )&apos;
-            when the following uri path is specified:
+            Route maps define how a path is to be matched and what class method
+            to call when matched.
         </p>
 
-        <pre>"/parts/show/908"</pre>
-
-        <p>The route could look like this:</p>
-        
-<pre>&lt;?php
-$part_route = array('/parts/show/:id' => array (
-    'controller' => 'parts',
-    'action'     => 'show',
-    'dynamic'    => array(':id' => '*')
-));
-?&gt;</pre>
-        
+        <h2>Defining Routes</h2>
         <p>
-            However, the following route would do the same thing (more on default
-            routes later):
+            Routes are defined by creating Route objects. You set the path, class,
+            method, and any dynamic elements.
         </p>
-<pre>&lt;?php
-$default_route = array('/:controller/:action/:id' => array (
-    'controller' => ':controller',
-    'action'     => ':action',
-    'dynamic'    => array(':controller' => '*', ':action' => '*', ':id' => '*')
-));
-?&gt;</pre>
-        
-        <h3>Dynamic elements</h3>
+<pre>
+  $route = new Route;
+  $route->setPath( '/orders/show/:order_id' );
+  $route->setMapClass( 'orders' );
+  $route->setMapMethod( 'show' );
+  $route->addDynamicElement( ':order_id', '^\d{5}$' );
+</pre>
         <p>
-            Dynamic element values can be the any '*' character, which will
-            match anything. They can also be regular expression strings.
+            You may wish for the class and/or method to be dynamic. You can
+            use regular expressions or just match anything in the path.
         </p>
 
-        <p>
-            Also notice in the default route example above that the controller
-            and action can also be dynamic. If many or all of your routes are
-            laid out the same way, you can define a default route (or fewer routes)
-            like this and save yourself from having to create many routes.
-        </p>
+<pre>
+  //Match any class and method
+  $route = new Route;
+  $route->setPath( '/:class/:method/:order_id' );
+  $route->setMapClass( ':class' ); //matches any :class
+  $route->setMapMethod( ':method' ); //matches any :action
+  $route->addDynamicElement( ':id', ':id' ); //matches any :id
 
-        <h3>When a matching route is found</h3>
-
-        <p>
-            <ol>
-                <li>If a custom dispatcher is set, it is called. Otherwise:</li>
-                <li>The router class' internal dispatcher is called</li>
-                <li>The internal dispatcher appends the controller suffix
-                    to the controller name and requires the file in.</li>
-                <li>The controller::action method is called and the matched
-                    dynamic array is passed to it.</li>
-            </ol>
-        </p>
-
-        <h3>When a matching route is <i>not</i> found</h3>
-        <p>
-            <ol>
-                <li>A class error is set</li>
-                <li>Your error handling class and method are called (if
-                you defined and set one)</li>
-            </ol>
-        </p>
+  //Define matching rules to match class and method
+  $route = new Route;
+  $route->setPath( '/:class/:method/:order_id' );
+  $route->setMapClass( '^o' ); //matches class beginning with 'o'
+  $route->setMapMethod( '^show_' ); //matches action beginning with 'show_'
+  $route->addDynamicElement( ':order_id', '^\d{5}$' ); //matches regexp
+</pre>
 
         <h2><a name="adding_routes">Adding routes</a></h2>
         <p>
-            You can add routes all at once by using the Router::autoLoadRoutes method.
-            This works by creating a separate file containing an array of routes.
-            You pass the routes file path to the autoLoadRoutes method.
-            This might be the preferrable way to add routes if you have many routes
-            to define.
+            Add Route objects to the Router using the addRoute method.
         </p>
-        <p>Autoload Example:</p>
-        <pre>Router::autoLoadRoutes('/path/to/my/routes/file')</pre>
-        <p>
-            The other method of adding routes is to use the Router::addRoute 
-            method. The first argument to addRoute is the route path and
-            the second argument is the route map array. If you only have a few
-            routes or even one default route, this may be easier than creating
-            a routes file and using the autoLoadRoutes method.
-        </p>
-        <p>
-            One at a time Example:
-        </p>
-<pre>try {
-    Router::addRoute('/my/path/:year/:id', array (
-        'controller' => 'controllerclass',
-        'action' => 'controllerMethod',
-        'dynamic' => array(':year' => '/^\d{4}$/', ':id' => '/^\d+$/')
-    );
-    Router::addRoute('/my/other/path/:id', array (
-        'controller' => 'controllerClass',
-        'action' => 'controllerMethod',
-        'dynamic' => array(':id' => '*')
-    );
-    //etc
-} catch (Exception $e) {
-    echo $e->getMessage();
-}</pre>
-        
-        <p>
-            Note that Router::addRoute() throws an Exception if the 'controller', 'action'
-            and 'dynamic' keys are not present in the second argument. Even if you are creating
-            a static map with no dynamic elements, the dynamic key must contain an empty array.
-        </p>
+<pre>
+  Router::addRoute($route);
+</pre>
 
-        <h2>Sample routes.php</h2>
+        <h2>Dispatching</h2>
+
         <p>
-            The routes file (if you use one) must contain an array stored in a variable
-            named "$routes" and should be in the format:
+            A Dispatcher class is provided. You can also use your own method
+            of dispatching the Route object returned by the Router class.
         </p>
-
-<pre>&lt;?php
-$routes = array (
-    'foo/bar/:id' => array (
-        'controller' => 'foo',
-        'action'     => 'bar',
-        //This map will match id's that contain numbers only
-        'dynamic'       => array(':id' => '/^\d+$/')
-    ),
-    //You may define a catch all map. It should go last in the array.
-    ':controller/:action/:id' => array (
-        'controller' => ':controller',
-        'action'     => ':action',
-        'dynamic'       => array(':controller' => '*', ':action' => '*', ':id' => '*')
-    )
-);
-?&gt;</pre>
-
-        <h2>Debugging Routes</h2>
         <p>
-            If you are having trouble getting routes to match up, you can
-            view the class errors by:
+            Router::findRoute will return either FALSE if no match was found or
+            a modified Route object. Here is how the supplied Dispatcher class can
+            be used.
         </p>
-        <pre>&lt;?php
-print_r( Router::getErrors() );
-?&gt;</pre>
+<pre> $dispatch = new Dispatcher;
 
-        <h2>Handling Errors</h2>
-        <p>
-            You can define an error handling class and tell the Router class
-            to use it. Your class method must accept an int and a string as
-            arguments. How your error class behaves is up to you. Here is
-            an example:
-        </p>
-        <pre>&lt;?php
-class UriError
-{
-    public function show( $error_code, $path )
-    {
-        $codes = array(
-            400 => "Bad Request",
-            404 => "Not Found",
-            500 => "Internal Server Error"
-        );
+ $found_route = Router::findRoute( urldecode($_SERVER['REQUEST_URI']) );
 
-        header("HTTP/1.0 $error_code {$codes[$error_code]}");
-        echo "$error_code {$codes[$error_code]} $path";
-    }
+ if( FALSE === $found_route )
+ {
+    //Handle unmatched route
+ }
+ else
+ {
+   try {
+    $dispatch->dispatch( $found_route );
+   } catch ( badClassNameException $exception ) {
+    //handle Exception
+   } catch ( classFileNotFoundException $exception ) {
+    //handle Exception
+   } catch ( classNameNotFoundException $exception ) {
+    //handle Exception
+   } catch ( classMethodNotFoundException $exception ) {
+    //handle Exception
+   } catch ( classNotSpecifiedException $exceptione ) {
+    //handle Exception
+   } catch ( methodNotSpecifiedException $exception ) {
+    //handle Exception
+   }
 }
-
-Router::setErrorHandler('UriError', 'show');
-?&gt;</pre>
-
-        <h2>Setting Controllers Path</h2>
+</pre>
         <p>
-            You will need to tell the Router class where your controllers are
-            located if you plan on using the built-in dispatcher.
-        </p>
-        <p>
-            You can optionally specify a suffix that you might be using in
-            your controller name convention. For example, if your controller
-            names end in 'Controller', you might specify
-            a suffix of 'Controller.php' (this is the default). For example:
-        </p>
-        <pre>&lt;?php
-Router::setControllersPath('/path/to/controllers', 'Controller.php');
-?&gt;</pre>
-        
-        <h2>Basic index.php Example</h2>
-        <p>
-            A very basic index.php/bootstrap file may look something like the
-            following.
-        </p>
-        
-<pre>&lt;?php
-include('Router.php');
-
-Router::setControllersPath('/path/to/controllers', '.php');
-
-try {
-    Router::addRoute(':controller/:action/:id', array (
-        'controller' => ':controller',
-        'action'     => ':action',
-        'dynamic'    => array(':controller' => '*', ':action' => '*', ':id' => '*')
-    ));
-} catch (Exception $e) {
-    echo $e;
-}
-
-Router::matchMap( urldecode($_SERVER['REQUEST_URI']) );
-?&gt;</pre>
-        
-        
-        <h2>Example index.php using routes.php file</h2>
-
-        <p>
-            This example moves your routes into a separate routes file and then
-            auto loads them.
-        </p>
-
-<pre>&lt;?php
-include('Router.php');
-
-Router::setControllersPath('/path/to/controllers', '.php');
-
-//Specify the location of the routes.php file
-Router::autoLoadRoutes( '/path/to/your/routes.php' );
-
-Router::matchMap( urldecode($_SERVER['REQUEST_URI']) );
-?&gt;</pre>
-        
-        <h2>The default dispatcher</h2>
-        <p>
-            The default dispatcher will call your controller::action statically. If you
-            want different behavior (such as creating an instance of the controller), define
-            your own dispatcher and set it using the Router::setDispatcher method described
-            below.
-        </p>
-        <p>
-            The data passed by the dispatcher to your controller has had little or
+            Any matched dynamic elements in the Route object are passed by the
+            Dispatcher to your class/controller as an associative array.
+            This passed data has had little or
             no security checking applied (however, before requiring in your
-            controller, the file name and path was vetted as much as possible
+            class/controller, the file name and path was vetted as much as possible
             to help protect against arbitrary files from being included).
-            Your should handle all data
-            passed to your controllers as you would all unsafe data from users.
+            You should handle all data
+            passed to your classes/controllers as you would all data from users
+            (as unsafe).
         </p>
-
-        <h2>Defining your own dispatcher</h2>
-        <p>
-            By default, the Router::dispatch method is called by Router::matchMap whenever
-            a match is found. You can define your own dispatch class and tell the Router
-            class to use that class or an instance of that class instead.
-        </p>
-        <p>
-            For example:
-        </p>
-        
-<pre>&lt;?php
-class customDispatcher
-{
-    /**
-    * string $controller
-    * string $action
-    * array $dynamic
-    */
-    public function dispatch( $controller, $action, $dynamic )
-    {
-        //Your own code to dispatch the request
-
-        //You really should do something to $controller before doing
-        // something dangerous like: require("/path/to/$controller");
-        // The same goes for the values in $action and $dynamic
-
-        //The dispatch method should return TRUE if the controller::method was
-        // found, FALSE if not found.
-        return TRUE;
-    }
-}
-
-Router::setControllersPath('/path/to/controllers');
-Router::autoLoadRoutes( '/path/to/your/routes.php' );
-
-//You can use the class statically...
-Router::setDispatcher( 'customDispatcher', 'dispatch' );
-
-//OR use an instance of the class:
-$custom_dispatcher = new customDispatcher();
-Router::setDispatcher( $custom_dispatcher, 'dispatch' );
-
-Router::matchMap( urldecode($_SERVER['REQUEST_URI']) );
-?&gt;</pre>
-        
-
         <p>
             VERY IMPORTANT! When creating your own dispatcher, make sure you
             take proper steps to secure the code and not allow arbitrary files
             to be required in. Any dynamic elements matched will be passed to
             your custom dispatcher from the wild and unaltered.
         </p>
+
+        <h3>Setting Class/Controllers Suffix</h3>
+        <p>
+            You may want to define your class files and class names with
+            a suffix which does not appear in your Route path. You can do so
+            by using the
+            Dispatcher's setSuffix method. For example, if you defined
+            a class of 'orders' in your Route path and map but you actually
+            want the class: 'ordersController' contained in 'ordersController.php'
+            to be called, set the suffix:
+        </p>
+<pre>
+   //Cause the file '[class]Controller.php' to be included and the class
+   // '[class]Controller' to be used.
+   $dispatch->setSuffix('Controller');
+</pre>
+        <h3>Setting Class/Controllers Path</h3>
+        <p>
+            Tell the dispatcher object where to look for your class files:
+        </p>
+<pre>
+   $dispatch->setClassPath('/path/to/controller_classes');
+</pre>
+        <h2>Putting it all together</h2>
+        <p>
+            A very basic index.php/bootstrap file may look something like the
+            following.
+        </p>
+        
+<pre>&lt;?php
+
+    //...Stuff before routing occurs
+
+    //Set the include path if you wish.
+    set_include_path(get_include_path() . PATH_SEPARATOR . '/path/to/php-router/src');
+
+    //Include a PageError class which can be used later. You supply this class.
+    include('PageError.php'); 
+    include('Router.php');
+
+    //Set up a 'catch all' default route and add it to the Router
+    $default_route = new Route;
+    $default_route->setPath('/:class/:method/:id');
+    $default_route->addDynamicElement(':class', ':class');
+    $default_route->addDynamicElement(':method', ':method');
+    $default_route->addDynamicElement(':id', '^\d{2}$');
+    Router::addRoute($default_route);
+
+    //Set up the Dispatcher object and set it's properites
+    $dispatch = new Dispatcher;
+    $dispatch->setSuffix('Controller');
+    $dispatch->setClassPath('/path/to/controllers/');
+
+    $url = urldecode($_SERVER['REQUEST_URI']);
+
+    $found_route = Router::findRoute($url);
+
+    if( FALSE === $found_route )
+    {
+        PageError::show('404', $url);
+    }
+    else
+    {
+        try {
+            $dispatch->dispatch( $found_route );
+        } catch ( badClassNameException $e ) {
+            PageError::show('404', $url);
+        } catch ( classFileNotFoundException $e ) {
+            PageError::show('404', $url);
+        } catch ( classNameNotFoundException $e ) {
+            PageError::show('404', $url);
+        } catch ( classMethodNotFoundException $e ) {
+            PageError::show('404', $url);
+        } catch ( classNotSpecifiedException $e ) {
+            PageError::show('404', $url);
+        } catch ( methodNotSpecifiedException $e ) {
+            PageError::show('404', $url);
+        }
+    }
+?&gt;</pre>
+        
 
         <h2>Other php url routing classes</h2>
         <ul>
@@ -495,20 +341,28 @@ Router::matchMap( urldecode($_SERVER['REQUEST_URI']) );
                 <a href="http://pear.php.net/package/Net_URL_Mapper">Net URL Mapper</a>
                 Light on documentation, not much to go on.
             </li>
-            <li>And of course, there are many php frameworks each with their own
-            routing systems.
-                <ul>
-                    <li><a href="http://codeigniter.com/user_guide/general/routing.html">
-                    Code Ignitor</a></li>
-                    <li><a href="http://docs.cakephp.nu/classes/show/Router">CakePHP</a></li>
-                    <li><a href="http://www.recessframework.org/page/routing-in-recess-screencast">
-                        Recess Framework</a></li>
-                    <li>
-                        <a href="http://framework.zend.com/manual/en/zend.controller.router.html">
-                        Zend Framework
-                        </a>
-                    </li>
-                </ul>
+        </ul>
+        <h2>PHP Framework Routing systems</h2>
+        <ul>
+            <li><a href="http://codeigniter.com/user_guide/general/routing.html">
+            Code Ignitor</a></li>
+            <li><a href="http://docs.cakephp.nu/classes/show/Router">CakePHP</a></li>
+            <li><a href="http://www.recessframework.org/page/routing-in-recess-screencast">
+                Recess Framework</a></li>
+            <li>
+                <a href="http://framework.zend.com/manual/en/zend.controller.router.html">
+                Zend Framework
+                </a>
+            </li>
+            <li>
+                <a href="http://www.symfony-project.org/book/1_2/09-Links-and-the-Routing-System">
+                    Symfony
+                </a>
+            </li>
+            <li>
+                <a href="http://docs.kohanaphp.com/general/routing">
+                    Kohana
+                </a>
             </li>
         </ul>
 
