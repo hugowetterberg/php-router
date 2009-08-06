@@ -11,12 +11,19 @@ class RouteTest extends PHPUnit_Framework_TestCase
         $this->assertTrue( is_object( new Route ), "Route object not created");
     }
 
-    public function testSetRoutePath()
+    public function testSetRoutePathBySetter()
     {
         $route = new Route;
 
         $test_path = '/:class/:method/:id';
         $route->setPath( $test_path );
+        $this->assertAttributeEquals($test_path, '_path', $route);
+    }
+
+    public function testSetRoutePathByConstructor()
+    {
+        $test_path = '/:class/:method/:id';
+        $route = new Route( $test_path );
         $this->assertAttributeEquals($test_path, '_path', $route);
     }
 

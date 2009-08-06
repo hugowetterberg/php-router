@@ -39,6 +39,7 @@ class Dispatcher
      * @throws classNotSpecifiedException
      * @throws methodNotSpecifiedException
      * @return mixed Route/Boolean
+     * @access public
      */
     public function dispatch( Route &$route )
     {
@@ -110,6 +111,8 @@ class Dispatcher
     /**
      * Sets a suffix to append to the class name being dispatched
      * @param string $suffix
+     * @access public
+     * @return void
      */
     public function setSuffix( $suffix )
     {
@@ -119,6 +122,8 @@ class Dispatcher
     /**
      * Set the path where dispatch class (controllers) reside
      * @param string $path
+     * @access public
+     * @return void
      */
     public function setClassPath( $path )
     {

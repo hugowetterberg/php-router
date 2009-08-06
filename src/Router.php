@@ -74,7 +74,12 @@ abstract class Router
 
         return $found_route;
     }
-
+    /**
+     * Resets the class (mainly used for testing)
+     * @return void
+     * @access public
+     * @static
+     */
     public static function resetRouter()
     {
         self::$_routes = array();

@@ -48,8 +48,20 @@ class Route
     private $_mapArguments = array();
 
     /**
+     * Class Constructor
+     * @param string $path optional
+     */
+    function __construct( $path = NULL )
+    {
+        if( NULL !== $path )
+            $this->setPath( $path );
+    }
+
+    /**
      * Set the route path
      * @param string $path
+     * @return void
+     * @access public
      */
     public function setPath( $path )
     {
@@ -59,6 +71,7 @@ class Route
     /**
      * Get the route path
      * @return string
+     * @access public
      */
     public function getPath()
     {
@@ -67,6 +80,8 @@ class Route
     /**
      * Set the map class name
      * @param string $class
+     * @access public
+     * @return void
      */
     public function setMapClass( $class )
     {
@@ -75,6 +90,7 @@ class Route
     /**
      * Get the map class name
      * @return string
+     * @access public
      */
     public function getMapClass()
     {
@@ -84,6 +100,8 @@ class Route
     /**
      * Sets the map method name
      * @param string $method
+     * @access public
+     * @return void
      */
     public function setMapMethod( $method )
     {
@@ -92,6 +110,7 @@ class Route
     /**
      * Gets the currently set map method
      * @return string
+     * @access public
      */
     public function getMapMethod()
     {
@@ -101,6 +120,8 @@ class Route
      * Adds a dynamic element to the Route
      * @param string $key
      * @param string $value
+     * @access public
+     * @return void
      */
     public function addDynamicElement( $key, $value )
     {
@@ -109,6 +130,7 @@ class Route
     /**
      * Get the dynamic elements array
      * @return array
+     * @access public
      */
     public function getDynamicElements()
     {
@@ -118,6 +140,8 @@ class Route
      * Adds a found argument to the _mapArguments array
      * @param string $key
      * @param string $value
+     * @access public
+     * @return void
      */
     private function _addMapArguments( $key, $value )
     {
@@ -126,6 +150,7 @@ class Route
     /**
      * Gets the _mapArguments array
      * @return array
+     * @access public
      */
     public function getMapArguments()
     {
@@ -136,6 +161,7 @@ class Route
      * Attempt to match this route to a supplied path
      * @param string $path_to_match
      * @return boolean
+     * @access public
      */
     public function matchMap( $path_to_match )
     {
