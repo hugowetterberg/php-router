@@ -36,20 +36,22 @@
             hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
             .footer { text-align:center; padding-top:30px; font-style: italic; }
             ul li{ margin-bottom: 3px;}
+            img { border: none; }
         </style>
     </head>
     <body>
-    <a href="http://github.com/robap/php-router">
-        <img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" />
-    </a>
-
+    <div>
+        <a href="http://github.com/robap/php-router">
+            <img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" />
+        </a>
+    </div>
     <div id="container">
         <div class="download">
             <a href="http://github.com/robap/php-router/zipball/master">
-                <img border="0" width="90" src="http://github.com/images/modules/download/zip.png">
+                <img alt="zip" width="90" src="http://github.com/images/modules/download/zip.png" />
             </a>
             <a href="http://github.com/robap/php-router/tarball/master">
-                <img border="0" width="90" src="http://github.com/images/modules/download/tar.png">
+                <img alt="tar" width="90" src="http://github.com/images/modules/download/tar.png" />
             </a>
         </div>
         <h1>
@@ -76,10 +78,11 @@
             find it useful.
         </p>
         <p>
-            In creating a routing system, there are about as many ways to go about it
-            as days in the year. I prefer a very
+            In creating a routing system, there are many ways to go about it.
+            I prefer a very
             verbose method of defining routes. I want to be able to tell with
-            certainty where a path is going to route to. Additionally, I shy
+            certainty how and where a path is going to get routed to.
+            Additionally, I shy
             away from using globals inside classes (even php's super globals).
             So, the system I'm outlining here attempts to hold to these ideals.
         </p>
@@ -93,15 +96,16 @@
                 framework and include Router.php.
             </li>
             <li>
-                Create your index.php file and Tell apache to route requests
-                through index.php (see sample.htaccess).
+                Create your index.php file and tell apache to route requests
+                through index.php (see sample.htaccess and
+                <a href="http://blog.craigweston.ca/?p=18">this good description
+                of how apache mod-rewrite is used for this purpose</a>).
             </li>
             <li>
-                Set your controllers path.
+                Set the path to your controller classes.
             </li>
             <li>
-                Create your routes for your controller/actions (see the 'Adding Routes'
-                section below).
+                Define your route or routes.
             </li>
             <li>
                 Call Router::findRoute(); and pass the result to a Dispatcher
@@ -114,10 +118,8 @@
         <p>
             Routes are added to the Router class. When the Router::findRoute()
             method is called, it searches through the defined routes and attempts
-            to find a match. If a match is found, a route object is returned.
-            This route object can then be dispatched. Matching is performed in
-            the order in which
-            the <a href="#adding_routes">routes have been added</a>.
+            to find a match. If a match is found, the matching route map can
+            be used to determine where the request should go.
         </p>
         <p>
             A Route is comprised of two main components:
@@ -152,31 +154,31 @@
             method, and any dynamic elements.
         </p>
 <pre>
-  $route = new Route;
-  $route->setPath( '/orders/show/:order_id' );
+  $route = new Route( '/orders/show/:order_id' );
   $route->setMapClass( 'orders' );
   $route->setMapMethod( 'show' );
   $route->addDynamicElement( ':order_id', '^\d{5}$' );
 </pre>
         <p>
             You may wish for the class and/or method to be dynamic. You can
-            use regular expressions or just match anything in the path.
+            use regular expressions or just match anything in the path. Add as
+            many routes as you need. Route matching is done in the order they
+            are added. So, put the most specific routes first and the most
+            generic route last.
         </p>
 
 <pre>
-  //Match any class and method
-  $route = new Route;
-  $route->setPath( '/:class/:method/:order_id' );
-  $route->setMapClass( ':class' ); //matches any :class
-  $route->setMapMethod( ':method' ); //matches any :action
-  $route->addDynamicElement( ':id', ':id' ); //matches any :id
-
   //Define matching rules to match class and method
-  $route = new Route;
-  $route->setPath( '/:class/:method/:order_id' );
+  $route = new Route( '/:class/:method/:order_id' );
   $route->setMapClass( '^o' ); //matches class beginning with 'o'
   $route->setMapMethod( '^show_' ); //matches action beginning with 'show_'
   $route->addDynamicElement( ':order_id', '^\d{5}$' ); //matches regexp
+
+  //Match any class and method
+  $route = new Route( '/:class/:method/:order_id' );
+  $route->setMapClass( ':class' ); //matches any :class
+  $route->setMapMethod( ':method' ); //matches any :action
+  $route->addDynamicElement( ':id', ':id' ); //matches any :id
 </pre>
 
         <h2><a name="adding_routes">Adding routes</a></h2>
@@ -283,8 +285,7 @@
     include('Router.php');
 
     //Set up a 'catch all' default route and add it to the Router
-    $default_route = new Route;
-    $default_route->setPath('/:class/:method/:id');
+    $default_route = new Route('/:class/:method/:id');
     $default_route->addDynamicElement(':class', ':class');
     $default_route->addDynamicElement(':method', ':method');
     $default_route->addDynamicElement(':id', '^\d{2}$');
@@ -387,8 +388,8 @@
         <p>
             You can also clone the project with <a href="http://git-scm.com">Git</a>
             by running:
+        </p>
         <pre>$ git clone git://github.com/robap/php-router</pre>
-    </p>
     <div class="footer">
         get the source code on GitHub : <a href="http://github.com/robap/php-router">robap/php-router</a>
     </div>
