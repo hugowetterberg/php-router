@@ -6,7 +6,6 @@ require_once('../src/Route.php');
 class DispatcherTest extends PHPUnit_Framework_TestCase
 {
     private $route;
-    private $dispatcher;
 
     public function setUp()
     {
@@ -29,8 +28,7 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
         $this->route->addDynamicElement( ':method', ':method' );
         $this->route->addDynamicElement( ':id', ':id' );
 
-        $this->dispatcher = new Dispatcher;
-        $this->dispatcher->setSuffix('Class');
+        Dispatcher::setSuffix('Class');
     }
 
     public function helperCreateTestClassFile()
@@ -56,7 +54,7 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
         $this->route->matchMap('/no_class/bar/55');
         
         try {
-            $this->dispatcher->dispatch( $this->route );
+            Dispatcher::dispatch( $this->route );
         } catch ( classFileNotFoundException $exception ) {
             return;
         }
@@ -82,7 +80,7 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
         $this->route->matchMap('/noclassname/bar/55');
 
         try {
-            $this->dispatcher->dispatch( $this->route );
+            Dispatcher::dispatch( $this->route );
         } catch ( classNameNotFoundException $exception ) {
             return;
         }
@@ -96,7 +94,7 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
         $this->route->matchMap('/ /method/55');
 
         try {
-            $this->dispatcher->dispatch( $this->route );
+            Dispatcher::dispatch( $this->route );
         } catch ( classNotSpecifiedException $exception ) {
             return;
         }
@@ -112,7 +110,7 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
         $this->route->matchMap('/foo\"/bar/55');
 
         try {
-            $this->dispatcher->dispatch( $this->route );
+            Dispatcher::dispatch( $this->route );
         } catch ( badClassNameException $exception ) {
             return;
         }
@@ -130,7 +128,7 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
         $this->route->matchMap('/foo/ /55');
 
         try {
-            $this->dispatcher->dispatch( $this->route );
+            Dispatcher::dispatch( $this->route );
         } catch ( methodNotSpecifiedException $exception ) {
             return;
         }
@@ -148,7 +146,7 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
         $this->route->matchMap('/foo/nomethod/55');
 
         try {
-            $this->dispatcher->dispatch( $this->route );
+            Dispatcher::dispatch( $this->route );
         } catch ( classMethodNotFoundException $exception ) {
             return;
         }
@@ -165,8 +163,8 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
 
         if( TRUE === $this->route->matchMap('/foo/bar/55') )
         {
-            $obj = $this->dispatcher->dispatch($this->route);
-            $this->assertTrue( is_object($obj) );
+            $res = Dispatcher::dispatch($this->route);
+            $this->isTrue( $res );
         }
         else
         {
@@ -185,7 +183,7 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
         if( FALSE === $this->route->matchMap('/im/not/in/here') )
         {
             try{
-                $obj = $this->dispatcher->dispatch($this->route);
+                Dispatcher::dispatch($this->route);
             } catch (classNotSpecifiedException $exception) {
                 return;
             }

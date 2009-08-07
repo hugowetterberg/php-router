@@ -15,19 +15,21 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-class Dispatcher
+abstract class Dispatcher
 {
     /**
      * The suffix used to append to the class name
      * @var string
+     * @static
      */
-    private $_suffix = '.php';
+    private static $_suffix = '.php';
 
     /**
      * The path to look for classes (or controllers)
      * @var string
+     * @static
      */
-    private $_classPath;
+    private static $_classPath;
 
     /**
      * Attempts to dispatch the supplied Route object. Returns false if fails
@@ -38,10 +40,11 @@ class Dispatcher
      * @throws classMethodNotFoundException
      * @throws classNotSpecifiedException
      * @throws methodNotSpecifiedException
-     * @return mixed Route/Boolean
+     * @return boolean
      * @access public
+     * @static
      */
-    public function dispatch( Route &$route )
+    public static function dispatch( Route &$route )
     {
         $class      = $route->getMapClass();
         $method     = $route->getMapMethod();
@@ -72,8 +75,8 @@ class Dispatcher
         }
 
         //Apply the suffix
-        $file_name = $this->_classPath . $class . $this->_suffix;
-        $class = $class . str_replace('.php', '', $this->_suffix);
+        $file_name = self::$_classPath . $class . self::$_suffix;
+        $class = $class . str_replace('.php', '', self::$_suffix);
         
         //At this point, we are relatively assured that the file name is safe
         // to check for it's existence and require in.
@@ -104,8 +107,13 @@ class Dispatcher
         //All above checks should have confirmed that the class can be instatiated
         // and the method can be called
         $obj = new $class;
-        call_user_func(array($obj, $method), $arguments);
-        return $obj;
+        $call_func_result = call_user_func(array($obj, $method), $arguments);
+
+        //PHP's call_user_func array returns false if there was an error
+        if( FALSE === $call_func_result )
+            return FALSE;
+        else
+            return TRUE;
     }
 
     /**
@@ -116,7 +124,7 @@ class Dispatcher
      */
     public function setSuffix( $suffix )
     {
-        $this->_suffix = $suffix . '.php';
+        self::$_suffix = $suffix . '.php';
     }
 
     /**
@@ -129,7 +137,7 @@ class Dispatcher
     {
         $path = preg_replace('/\/$/', '', $path);
 
-        $this->_classPath = $path . '/';
+        self::$_classPath = $path . '/';
     }
 }
 
