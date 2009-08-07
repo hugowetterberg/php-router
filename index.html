@@ -81,7 +81,7 @@
             In creating a routing system, there are many ways to go about it.
             I prefer a very
             verbose method of defining routes. I want to be able to tell with
-            certainty how and where a path is going to get routed to.
+            certainty where a path is going to be routed to.
             Additionally, I shy
             away from using globals inside classes (even php's super globals).
             So, the system I'm outlining here attempts to hold to these ideals.
@@ -108,8 +108,8 @@
                 Define your route or routes.
             </li>
             <li>
-                Call Router::findRoute(); and pass the result to a Dispatcher
-                object. A Dispatcher class is included but you can also create
+                Call Router::findRoute(); and pass the result to the Dispatcher
+                class. A Dispatcher class is included but you can also create
                 your own.
             </li>
         </ol>
@@ -200,8 +200,7 @@
             a modified Route object. Here is how the supplied Dispatcher class can
             be used.
         </p>
-<pre> $dispatch = new Dispatcher;
-
+<pre>
  $found_route = Router::findRoute( urldecode($_SERVER['REQUEST_URI']) );
 
  if( FALSE === $found_route )
@@ -211,7 +210,7 @@
  else
  {
    try {
-    $dispatch->dispatch( $found_route );
+    Dispatcher::dispatch( $found_route );
    } catch ( badClassNameException $exception ) {
     //handle Exception
    } catch ( classFileNotFoundException $exception ) {
@@ -258,14 +257,14 @@
 <pre>
    //Cause the file '[class]Controller.php' to be included and the class
    // '[class]Controller' to be used.
-   $dispatch->setSuffix('Controller');
+   Dispatcher::setSuffix('Controller');
 </pre>
         <h3>Setting Class/Controllers Path</h3>
         <p>
-            Tell the dispatcher object where to look for your class files:
+            Tell the dispatcher class where to look for your class files:
         </p>
 <pre>
-   $dispatch->setClassPath('/path/to/controller_classes');
+   Dispatcher::setClassPath('/path/to/controller_classes');
 </pre>
         <h2>Putting it all together</h2>
         <p>
@@ -291,10 +290,9 @@
     $default_route->addDynamicElement(':id', '^\d{2}$');
     Router::addRoute($default_route);
 
-    //Set up the Dispatcher object and set it's properites
-    $dispatch = new Dispatcher;
-    $dispatch->setSuffix('Controller');
-    $dispatch->setClassPath('/path/to/controllers/');
+    //Set the Dispatcher properites
+    Dispatcher::setSuffix('Controller');
+    Dispatcher::setClassPath('/path/to/controllers/');
 
     $url = urldecode($_SERVER['REQUEST_URI']);
 
@@ -307,7 +305,7 @@
     else
     {
         try {
-            $dispatch->dispatch( $found_route );
+            Dispatcher::dispatch( $found_route );
         } catch ( badClassNameException $e ) {
             PageError::show('404', $url);
         } catch ( classFileNotFoundException $e ) {
