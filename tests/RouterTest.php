@@ -1,13 +1,11 @@
 <?php
 
 require_once('PHPUnit/Framework.php');
-require_once('../src/Route.php');
-require_once('../src/Router.php');
+include_once(dirname(__FILE__) . '/../src/Route.php');
+include_once(dirname(__FILE__) . '/../src/Router.php');
 
 class RouterTest extends PHPUnit_Framework_TestCase
 {
-    
-
     public function testAddRoute()
     {
         Router::resetRouter();
@@ -20,11 +18,127 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $route->addDynamicElement( ':method', ':method' );
         $route->addDynamicElement( ':id', ':id' );
 
-        Router::addRoute( $route );
+        Router::addRoute( 'myroute', $route );
 
         $routes = Router::getRoutes();
         
         $this->assertTrue( in_array($route, $routes));
+    }
+
+    public function testGetLink()
+    {
+        Router::resetRouter();
+        $route = new Route;
+
+        $route->setPath( '/:class/:method/:id' );
+
+        $route->addDynamicElement( ':class', ':class' );
+        $route->addDynamicElement( ':method', ':method' );
+        $route->addDynamicElement( ':id', ':id' );
+
+        Router::addRoute( 'myroute', $route );
+
+        $url = Router::getUrl( 'myroute', array(
+            ':class'    => 'myclass',
+            ':method'   => 'mymethod',
+            ':id'        => 1
+        ));
+        
+        $this->assertSame('/myclass/mymethod/1', $url);
+    }
+
+    public function testFailGetLink()
+    {
+        Router::resetRouter();
+        $route = new Route;
+
+        $route->setPath( '/:class/:method/:id' );
+
+        $route->addDynamicElement( ':class', ':class' );
+        $route->addDynamicElement( ':method', ':method' );
+        $route->addDynamicElement( ':id', ':id' );
+
+        Router::addRoute( 'myroute', $route );
+
+        //should create '/myclass/mymethod/1'
+        $url = Router::getUrl( 'myroute', array(
+            ':class'    => 'myclass',
+            ':method'   => 'mymethod',
+            ':id'        => 1
+        ));
+        
+        $this->assertNotSame('/myclass/mymethod/2', $url);
+    }
+
+    /**
+     * @expectedException PHPUnit_Framework_Error
+     */
+    public function testGetUrlNonExistentRoute()
+    {
+        Router::resetRouter();
+        $route = new Route;
+
+        $route->setPath( '/:class/:method/:id' );
+
+        $route->addDynamicElement( ':class', ':class' );
+        $route->addDynamicElement( ':method', ':method' );
+        $route->addDynamicElement( ':id', ':id' );
+
+        Router::addRoute( 'myroute', $route );
+
+        //a php error should be triggered
+        $failed_url = Router::getUrl( 'not_there', array(
+            ':class'    => 'myclass',
+            ':method'   => 'mymethod',
+            ':id'        => 1
+        ));
+    }
+
+    /**
+     * @expectedException PHPUnit_Framework_Error
+     */
+    public function testGetUrlWrongArgumentForNamedRoute()
+    {
+        Router::resetRouter();
+        $route = new Route;
+
+        $route->setPath( '/:class/:method/:id' );
+
+        $route->addDynamicElement( ':class', ':class' );
+        $route->addDynamicElement( ':method', ':method' );
+        $route->addDynamicElement( ':id', ':id' );
+
+        Router::addRoute( 'myroute', $route );
+
+        //a php error should be triggered
+        $failed_url = Router::getUrl( 'myroute', array(
+            ':class'    => 'myclass',
+            ':method'   => 'mymethod',
+            ':wrong'        => 1
+        ));
+    }
+
+    /**
+     * @expectedException PHPUnit_Framework_Error
+     */
+    public function testGetUrlWrongNumberOfArgumentsForNamedRoutes()
+    {
+        Router::resetRouter();
+        $route = new Route;
+
+        $route->setPath( '/:class/:method/:id' );
+
+        $route->addDynamicElement( ':class', ':class' );
+        $route->addDynamicElement( ':method', ':method' );
+        $route->addDynamicElement( ':id', ':id' );
+
+        Router::addRoute( 'myroute', $route );
+
+        //a php error should be triggered
+        $failed_url = Router::getUrl( 'myroute', array(
+            ':class'    => 'myclass',
+            ':method'   => 'mymethod'
+        ));
     }
 
     /**
@@ -39,7 +153,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $path = '/find/this/class';
         $route->setPath( $path );
 
-        Router::addRoute( $route );
+        Router::addRoute( 'myroute', $route );
 
         $found_route = Router::findRoute( $path );
 
@@ -59,7 +173,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $path = '/find/this/route';
         $route->setPath( $path );
 
-        Router::addRoute( $route );
+        Router::addRoute( 'myroute', $route );
 
         $found_route = Router::findRoute( '/fail/to/find/this/route' );
 
@@ -78,7 +192,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $id_route->addDynamicElement( ':class', '^parts' );
         $id_route->addDynamicElement( ':method', ':method' );
         $id_route->addDynamicElement( ':id', '^\d{3}$' );
-        Router::addRoute( $id_route );
+        Router::addRoute( 'id', $id_route );
 
         //Here is a default route (should go last)
         $def_route = new Route;
@@ -86,7 +200,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $def_route->addDynamicElement( ':class', ':class' );
         $def_route->addDynamicElement( ':method', ':method' );
         $def_route->addDynamicElement( ':id', ':id' );
-        Router::addRoute( $def_route );
+        Router::addRoute( 'default', $def_route );
 
         //We should only find the id_route defined above
         $find_path = '/parts/show/100';

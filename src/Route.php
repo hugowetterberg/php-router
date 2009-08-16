@@ -1,19 +1,9 @@
 <?php
-/*
-    Copyright 2009 Rob Apodaca <rob.apodaca@gmail.com>
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+/**
+ * @author Rob Apodaca <rob.apodaca@gmail.com>
+ * @copyright Copyright (c) 2009, Rob Apodaca
+ * @license http://opensource.org/licenses/gpl-license.php GNU Public License
+ * @link http://robap.github.com/php-router/
  */
 class Route
 {
@@ -51,7 +41,7 @@ class Route
      * Class Constructor
      * @param string $path optional
      */
-    function __construct( $path = NULL )
+    public function __construct( $path = NULL )
     {
         if( NULL !== $path )
             $this->setPath( $path );
@@ -87,6 +77,7 @@ class Route
     {
         $this->_class = $class;
     }
+
     /**
      * Get the map class name
      * @return string
@@ -107,6 +98,7 @@ class Route
     {
         $this->_method = $method;
     }
+
     /**
      * Gets the currently set map method
      * @return string
@@ -116,6 +108,7 @@ class Route
     {
         return $this->_method;
     }
+
     /**
      * Adds a dynamic element to the Route
      * @param string $key
@@ -127,6 +120,7 @@ class Route
     {
         $this->_dynamicElements[$key] = $value;
     }
+
     /**
      * Get the dynamic elements array
      * @return array
@@ -136,6 +130,7 @@ class Route
     {
         return $this->_dynamicElements;
     }
+
     /**
      * Adds a found argument to the _mapArguments array
      * @param string $key
@@ -147,6 +142,7 @@ class Route
     {
         $this->_mapArguments[$key] = $value;
     }
+    
     /**
      * Gets the _mapArguments array
      * @return array

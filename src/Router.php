@@ -1,25 +1,14 @@
 <?php
-/*
-    Copyright 2009 Rob Apodaca <rob.apodaca@gmail.com>
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 include_once(dirname(__FILE__) . '/Route.php');
 include_once(dirname(__FILE__) . '/Dispatcher.php');
 
-abstract class Router
+/**
+ * @author Rob Apodaca <rob.apodaca@gmail.com>
+ * @copyright Copyright (c) 2009, Rob Apodaca
+ * @license http://opensource.org/licenses/gpl-license.php GNU Public License
+ * @link http://robap.github.com/php-router/
+ */
+class Router
 {
     /**
      * Stores the Route objects
@@ -30,15 +19,21 @@ abstract class Router
     private static $_routes = array();
 
     /**
-     * Adds a route to the list of possible routes
+     * Private constructor ensures no instances
+     */
+    private function __construct(){}
+    
+    /**
+     * Adds a named route to the list of possible routes
+     * @param string $name
      * @param Route $route
      * @static
      * @access public
      * @return void
      */
-    public static function addRoute( &$route )
+    public static function addRoute( $name, &$route )
     {
-        self::$_routes[] = $route;
+        self::$_routes[$name] = $route;
     }
 
     /**
@@ -50,6 +45,43 @@ abstract class Router
     public static function getRoutes()
     {
         return self::$_routes;
+    }
+
+    /**
+     * Builds and gets a url for the named route
+     * @param string $name
+     * @param array $args
+     * @return string the url
+     */
+    public static function getUrl( $name, $args = array() )
+    {
+        if( TRUE === isset(self::$_routes[$name]) )
+        {
+            $match_ok = TRUE;
+
+            //Check for the correct number of arguments
+            if( count($args) !== count(self::$_routes[$name]->getDynamicElements()) )
+                $match_ok = FALSE;
+
+            $path = self::$_routes[$name]->getPath();
+            foreach( $args as $arg_key => $arg_value )
+            {
+                $path = str_replace( $arg_key, $arg_value, $path, $count );
+                if( 1 !== $count )
+                    $match_ok = FALSE;
+            }
+
+            //Check that all of the argument keys matched up with the dynamic elements
+            if( FALSE === $match_ok )
+                trigger_error('Incorrect arguments for named path');
+
+            return $path;
+        }
+        else
+        {
+            trigger_error('Named Path not found in Router');
+            return '';
+        }
     }
 
     /**
@@ -74,6 +106,7 @@ abstract class Router
 
         return $found_route;
     }
+    
     /**
      * Resets the class (mainly used for testing)
      * @return void
