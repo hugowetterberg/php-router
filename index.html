@@ -24,12 +24,12 @@
                 margin: 0 auto;
                 width: 700px;
             }
-            h1 { font-size: 3.8em; color: #db7c1f; margin-bottom: 3px; }
+            h1 { font-size: 3.8em; color: #1a4900; margin-bottom: 3px; }
             h1 .small { font-size: 0.4em; }
-            h1 a { text-decoration: none }
-            h2 { font-size: 1.5em; color: #db7c1f; }
-            h3 { text-align: center; color: #db7c1f; }
-            a { color: #db7c1f; }
+            h1 a { text-decoration: none; color: #1a4900; }
+            h2 { font-size: 1.5em; color: #1a4900; }
+            h3 { text-align: center; color: #1a4900; }
+            a { color: #0a0049; }
             .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
             .download { float: right; }
             pre { background: #e0e0e0; color: #000; padding: 15px;}
@@ -181,12 +181,14 @@
   $route->addDynamicElement( ':id', ':id' ); //matches any :id
 </pre>
 
-        <h2><a name="adding_routes">Adding routes</a></h2>
+        <h2>Adding routes</h2>
         <p>
-            Add Route objects to the Router using the addRoute method.
+            Add Route objects to the Router using the addRoute method. You pass
+            a name for the route and the route object. The name can be used later
+            to construct url's.
         </p>
 <pre>
-  Router::addRoute($route);
+  Router::addRoute( 'route_name', $route );
 </pre>
 
         <h2>Dispatching</h2>
@@ -266,6 +268,24 @@
 <pre>
    Dispatcher::setClassPath('/path/to/controller_classes');
 </pre>
+        <h2>Creating URLs</h2>
+        <p>
+            Once routes have been defined, you can create url's for links
+            and form actions by referring to your named route
+            and pass any dynamic elements as an argument array:
+        </p>
+<pre>
+  //An example 'orders' route that might be set up
+  $orders_route = new Route( '/orders/show/:order_id' );
+  $orders_route->setMapClass( 'orders' );
+  $orders_route->setMapMethod( 'show' );
+  $orders_route->addDynamicElement( ':order_id', '^\d{5}$' );
+  Router::addRoute( 'orders', $ordes_route );
+
+  //Somewhere else you want to create url for 'orders' with id = 5:
+  Router::getUrl( 'orders', array( ':order_id' => 5 ) );
+</pre>
+
         <h2>Putting it all together</h2>
         <p>
             A very basic index.php/bootstrap file may look something like the
@@ -276,34 +296,39 @@
 
     //...Stuff before routing occurs
 
-    //Set the include path if you wish.
+    //Set the include path so that the Routing system files can be included.
     set_include_path(get_include_path() . PATH_SEPARATOR . '/path/to/php-router/src');
 
     //Include a PageError class which can be used later. You supply this class.
     include('PageError.php'); 
     include('Router.php');
 
-    //Set up a 'catch all' default route and add it to the Router
+    //Set up a 'catch all' default route and add it to the Router.
+    //You may want to set up an external file, define your routes there, and
+    // and include that file in place of this code block.
     $default_route = new Route('/:class/:method/:id');
     $default_route->addDynamicElement(':class', ':class');
     $default_route->addDynamicElement(':method', ':method');
-    $default_route->addDynamicElement(':id', '^\d{2}$');
-    Router::addRoute($default_route);
+    $default_route->addDynamicElement(':id', ':id');
+    Router::addRoute( 'default', $default_route );
 
     //Set the Dispatcher properites
     Dispatcher::setSuffix('Controller');
     Dispatcher::setClassPath('/path/to/controllers/');
 
-    $url = urldecode($_SERVER['REQUEST_URI']);
+    //Find the Route for your url
+    $url            = urldecode($_SERVER['REQUEST_URI']);
+    $found_route    = Router::findRoute($url);
 
-    $found_route = Router::findRoute($url);
-
+    //Dispatch the Route
     if( FALSE === $found_route )
     {
         PageError::show('404', $url);
     }
     else
     {
+        //Note: you would likely use some other http status codes depending
+        // on the specific Exception thrown.
         try {
             Dispatcher::dispatch( $found_route );
         } catch ( badClassNameException $e ) {
@@ -367,7 +392,7 @@
 
         <h2>License</h2>
         <p>
-            <a href="http://www.gnu.org/licenses/gpl.txt">GNU General Public License</a>
+            <a href="http://opensource.org/licenses/gpl-3.0.html">GNU General Public License</a>
         </p>
         <h2>Authors</h2>
         <p>Rob Apodaca (rob.apodaca@gmail.com)
