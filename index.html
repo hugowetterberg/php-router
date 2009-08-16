@@ -279,7 +279,7 @@
   $orders_route = new Route( '/orders/show/:order_id' );
   $orders_route->setMapClass( 'orders' );
   $orders_route->setMapMethod( 'show' );
-  $orders_route->addDynamicElement( ':order_id', '^\d{5}$' );
+  $orders_route->addDynamicElement( ':order_id', '^\d$' );
   Router::addRoute( 'orders', $ordes_route );
 
   //Somewhere else you want to create url for 'orders' with id = 5:
