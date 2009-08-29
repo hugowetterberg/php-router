@@ -59,18 +59,18 @@
             <span class="small">by <a href="http://github.com/robap">robap</a></span>
         </h1>
         <div class="description">
-            a php routing system
+            a php url routing system
         </div>
 
         <h2>Introduction</h2>
         <p>
-            The php router system is designed to help you with php routing by mapping
+            The php url router system is designed to help you with php url routing by mapping
             so called &quot;pretty&quot; url&rsquo;s to class::methods that reside in your
             framework. It adopts the
             <a href="http://en.wikipedia.org/wiki/Front_Controller_pattern">
             front controller</a> pattern in which all requests are passed through
             a centralized location. That centralized location then can use this
-            Routing system to pass control to some other part of your framework.
+            URL Routing system to pass control to some other part of your framework.
         </p>
         <p>
             It is intended that this system be portable and flexible enough to
@@ -82,9 +82,6 @@
             I prefer a very
             verbose method of defining routes. I want to be able to tell with
             certainty where a path is going to be routed to.
-            Additionally, I shy
-            away from using globals inside classes (even php's super globals).
-            So, the system I'm outlining here attempts to hold to these ideals.
         </p>
 
         <h2>Dependencies</h2>
@@ -92,8 +89,14 @@
         <h2>Install</h2>
         <ol>
             <li>
-                Copy the contents of src/ to some place accessible by your
-                framework and include Router.php.
+                Download the latest
+                <a href="http://github.com/robap/php-router/tarball/master">tarball</a>
+                or <a href="http://github.com/robap/php-router/zipball/master">zip</a> file
+                and extract the contents to some place accessible by your
+                framework.
+            </li>
+            <li>
+                Include the php-router/php-router.php file
             </li>
             <li>
                 Create your index.php file and tell apache to route requests
@@ -118,7 +121,8 @@
         <p>
             Routes are added to the Router class. When the Router::findRoute()
             method is called, it searches through the defined routes and attempts
-            to find a match. If a match is found, the matching route map can
+            to find a match for the given url. If a match is found, the matching
+            route map can
             be used to determine where the request should go.
         </p>
         <p>
@@ -127,7 +131,7 @@
         </p>
         <h3>Route Paths</h3>
         <p>
-            The route path is a template that represents a relative uri that you
+            The route path is a template that represents a relative url that you
             would like to match. It is made up of <i>static</i> or <i>dynamic</i>
             elements which are separated by a &quot;/&quot;.
         </p>
@@ -188,7 +192,8 @@
             to construct url's.
         </p>
 <pre>
-  Router::addRoute( 'route_name', $route );
+    $router = new Router;
+    $router->addRoute( 'route_name', $route );
 </pre>
 
         <h2>Dispatching</h2>
@@ -203,7 +208,9 @@
             be used.
         </p>
 <pre>
- $found_route = Router::findRoute( urldecode($_SERVER['REQUEST_URI']) );
+ $dispatcher = new Dispatcher;
+ 
+ $found_route = $router->findRoute( urldecode($_SERVER['REQUEST_URI']) );
 
  if( FALSE === $found_route )
  {
@@ -212,7 +219,7 @@
  else
  {
    try {
-    Dispatcher::dispatch( $found_route );
+    $dispatcher->dispatch( $found_route );
    } catch ( badClassNameException $exception ) {
     //handle Exception
    } catch ( classFileNotFoundException $exception ) {
@@ -259,14 +266,14 @@
 <pre>
    //Cause the file '[class]Controller.php' to be included and the class
    // '[class]Controller' to be used.
-   Dispatcher::setSuffix('Controller');
+   $dispatcher->setSuffix('Controller');
 </pre>
         <h3>Setting Class/Controllers Path</h3>
         <p>
             Tell the dispatcher class where to look for your class files:
         </p>
 <pre>
-   Dispatcher::setClassPath('/path/to/controller_classes');
+   $dispatcher->setClassPath('/path/to/controller_classes');
 </pre>
         <h2>Creating URLs</h2>
         <p>
@@ -275,15 +282,17 @@
             and pass any dynamic elements as an argument array:
         </p>
 <pre>
+  $router = new Router;
+
   //An example 'orders' route that might be set up
   $orders_route = new Route( '/orders/show/:order_id' );
   $orders_route->setMapClass( 'orders' );
   $orders_route->setMapMethod( 'show' );
   $orders_route->addDynamicElement( ':order_id', '^\d$' );
-  Router::addRoute( 'orders', $ordes_route );
+  $router->addRoute( 'orders', $ordes_route );
 
   //Somewhere else you want to create url for 'orders' with id = 5:
-  Router::getUrl( 'orders', array( ':order_id' => 5 ) );
+  $router->getUrl( 'orders', array( ':order_id' => 5 ) );
 </pre>
 
         <h2>Putting it all together</h2>
@@ -297,11 +306,21 @@
     //...Stuff before routing occurs
 
     //Set the include path so that the Routing system files can be included.
-    set_include_path(get_include_path() . PATH_SEPARATOR . '/path/to/php-router/src');
+    set_include_path(get_include_path() . PATH_SEPARATOR . '/path/to/php-router');
 
     //Include a PageError class which can be used later. You supply this class.
     include('PageError.php'); 
-    include('Router.php');
+    include('php-router.php');
+
+    //Create a new instance of Router (you'd like use a factory or container to
+    // manage the instance)
+    $router = new Router;
+
+    //Create a new instance of Dispatcher (again, you would probably utilize a
+    // factory or container)
+    $dispatcher = new Dispatcher;
+    $dispatcher->setSuffix('Controller');
+    $dispatcher->setClassPath('/path/to/controllers/');
 
     //Set up a 'catch all' default route and add it to the Router.
     //You may want to set up an external file, define your routes there, and
@@ -310,15 +329,11 @@
     $default_route->addDynamicElement(':class', ':class');
     $default_route->addDynamicElement(':method', ':method');
     $default_route->addDynamicElement(':id', ':id');
-    Router::addRoute( 'default', $default_route );
-
-    //Set the Dispatcher properites
-    Dispatcher::setSuffix('Controller');
-    Dispatcher::setClassPath('/path/to/controllers/');
+    $router->addRoute( 'default', $default_route );
 
     //Find the Route for your url
     $url            = urldecode($_SERVER['REQUEST_URI']);
-    $found_route    = Router::findRoute($url);
+    $found_route    = $router->findRoute($url);
 
     //Dispatch the Route
     if( FALSE === $found_route )
@@ -330,7 +345,7 @@
         //Note: you would likely use some other http status codes depending
         // on the specific Exception thrown.
         try {
-            Dispatcher::dispatch( $found_route );
+            $dispatcher->dispatch( $found_route );
         } catch ( badClassNameException $e ) {
             PageError::show('404', $url);
         } catch ( classFileNotFoundException $e ) {
