@@ -1,7 +1,4 @@
 <?php
-include_once(dirname(__FILE__) . '/Route.php');
-include_once(dirname(__FILE__) . '/Dispatcher.php');
-
 /**
  * @author Rob Apodaca <rob.apodaca@gmail.com>
  * @copyright Copyright (c) 2009, Rob Apodaca
@@ -16,35 +13,28 @@ class Router
      * @static
      * @access private
      */
-    private static $_routes = array();
-
-    /**
-     * Private constructor ensures no instances
-     */
-    private function __construct(){}
+    private $_routes = array();
     
     /**
      * Adds a named route to the list of possible routes
      * @param string $name
      * @param Route $route
-     * @static
      * @access public
      * @return void
      */
-    public static function addRoute( $name, &$route )
+    public function addRoute( $name, $route )
     {
-        self::$_routes[$name] = $route;
+        $this->_routes[$name] = $route;
     }
 
     /**
      * Returns the routes array
      * @return array
-     * @static
      * @access public
      */
-    public static function getRoutes()
+    public function getRoutes()
     {
-        return self::$_routes;
+        return $this->_routes;
     }
 
     /**
@@ -53,17 +43,17 @@ class Router
      * @param array $args
      * @return string the url
      */
-    public static function getUrl( $name, $args = array() )
+    public function getUrl( $name, $args = array() )
     {
-        if( TRUE === isset(self::$_routes[$name]) )
+        if( TRUE === isset($this->_routes[$name]) )
         {
             $match_ok = TRUE;
 
             //Check for the correct number of arguments
-            if( count($args) !== count(self::$_routes[$name]->getDynamicElements()) )
+            if( count($args) !== count($this->_routes[$name]->getDynamicElements()) )
                 $match_ok = FALSE;
 
-            $path = self::$_routes[$name]->getPath();
+            $path = $this->_routes[$name]->getPath();
             foreach( $args as $arg_key => $arg_value )
             {
                 $path = str_replace( $arg_key, $arg_value, $path, $count );
@@ -88,14 +78,13 @@ class Router
      * Finds a maching route in the routes array using specified $path
      * @param string $path
      * @return mixed Route/Boolean
-     * @static
      * @access public
      */
-    public static function findRoute( $path )
+    public function findRoute( $path )
     {
         $found_route = FALSE;
 
-        foreach( self::$_routes as $route )
+        foreach( $this->_routes as $route )
         {
             if( TRUE === $route->matchMap( $path ) )
             {
@@ -105,17 +94,6 @@ class Router
         }
 
         return $found_route;
-    }
-    
-    /**
-     * Resets the class (mainly used for testing)
-     * @return void
-     * @access public
-     * @static
-     */
-    public static function resetRouter()
-    {
-        self::$_routes = array();
     }
 }
 ?>

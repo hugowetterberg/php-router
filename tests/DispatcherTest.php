@@ -1,34 +1,17 @@
 <?php
 require_once('PHPUnit/Framework.php');
-include_once(dirname(__FILE__) . '/../src/Dispatcher.php');
-include_once(dirname(__FILE__) . '/../src/Route.php');
+require_once 'Mockery/Framework.php';
+include_once(dirname(__FILE__) . '/../lib/Dispatcher.php');
 
 class DispatcherTest extends PHPUnit_Framework_TestCase
 {
-    private $route;
 
-    public function setUp()
-    {
-        $this->helperCreateRouteObject();
-    }
+   
 
     public function tearDown()
     {
         @unlink('fooClass.php');
         @unlink('noclassnameClass.php');
-    }
-
-    public function helperCreateRouteObject()
-    {
-        $this->route = new Route;
-
-        $this->route->setPath( '/:class/:method/:id' );
-
-        $this->route->addDynamicElement( ':class', ':class' );
-        $this->route->addDynamicElement( ':method', ':method' );
-        $this->route->addDynamicElement( ':id', ':id' );
-
-        Dispatcher::setSuffix('Class');
     }
 
     public function helperCreateTestClassFile()
@@ -49,12 +32,18 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
 
     public function testCatchClassFileNotFound()
     {
-        $this->helperCreateRouteObject();
+        $route = mockery('Route', array(
+            'matchMap'      => TRUE,
+            'getMapClass'   => 'class',
+            'getMapMethod'  => 'method'
+        ));
 
-        $this->route->matchMap('/no_class/bar/55');
+        $route->matchMap('/no_class/bar/55');
+
+        $dispatcher = new Dispatcher;
         
         try {
-            Dispatcher::dispatch( $this->route );
+            $dispatcher->dispatch( $route );
         } catch ( classFileNotFoundException $exception ) {
             return;
         }
@@ -77,10 +66,16 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
         fwrite($fh, $contents);
         fclose($fh);
 
-        $this->route->matchMap('/noclassname/bar/55');
+        $route = mockery('Route', array(
+            'matchMap'      => TRUE,
+            'getMapClass'   => 'noclassnameClass',
+            'getMapMethod'  => 'method'
+        ));
+
+        $dispatcher = new Dispatcher;
 
         try {
-            Dispatcher::dispatch( $this->route );
+            $dispatcher->dispatch( $route );
         } catch ( classNameNotFoundException $exception ) {
             return;
         }
@@ -91,44 +86,56 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
 
     public function testCatchClassNotSpecified()
     {
-        $this->route->matchMap('/ /method/55');
+        $route = mockery('Route', array(
+            'matchMap'      => FALSE,
+            'getMapClass'   => '',
+            'getMapMethod'  => 'method'
+        ));
+
+        $dispatcher = new Dispatcher;
 
         try {
-            Dispatcher::dispatch( $this->route );
+            $dispatcher->dispatch( $route );
         } catch ( classNotSpecifiedException $exception ) {
             return;
         }
-
 
         $this->fail('Catching class not specified failed ');
     }
 
     public function testCatchBadClassName()
     {
-        $this->helperCreateRouteObject();
+        $route = mockery('Route', array(
+            'matchMap'      => FALSE,
+            'getMapClass'   => 'foo\"',
+            'getMapMethod'  => 'method'
+        ));
 
-        $this->route->matchMap('/foo\"/bar/55');
+        $dispatcher = new Dispatcher;
 
         try {
-            Dispatcher::dispatch( $this->route );
+            $dispatcher->dispatch( $route );
         } catch ( badClassNameException $exception ) {
             return;
         }
-
 
         $this->fail('Catching bad class name failed ');
     }
 
     public function testCatchMethodNotSpecified()
     {
-        $this->helperCreateRouteObject();
-
         $this->helperCreateTestClassFile();
 
-        $this->route->matchMap('/foo/ /55');
+        $route = mockery('Route', array(
+            'matchMap'      => FALSE,
+            'getMapClass'   => 'foo',
+            'getMapMethod'  => ''
+        ));
+
+        $dispatcher = new Dispatcher;
 
         try {
-            Dispatcher::dispatch( $this->route );
+            $dispatcher->dispatch( $route );
         } catch ( methodNotSpecifiedException $exception ) {
             return;
         }
@@ -139,31 +146,42 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
 
     public function testCatchClassMethodNotFound()
     {
-        $this->helperCreateRouteObject();
-
         $this->helperCreateTestClassFile();
 
-        $this->route->matchMap('/foo/nomethod/55');
+        $route = mockery('Route', array(
+            'matchMap'      => TRUE,
+            'getMapClass'   => 'foo',
+            'getMapMethod'  => 'nomethod'
+        ));
+
+        $dispatcher = new Dispatcher;
+        $dispatcher->setSuffix('Class');
 
         try {
-            Dispatcher::dispatch( $this->route );
+           $dispatcher->dispatch( $route );
         } catch ( classMethodNotFoundException $exception ) {
             return;
         }
-
 
         $this->fail('Catching class method not found failed ');
     }
 
     public function testSuccessfulDispatch()
     {
-        $this->helperCreateRouteObject();
-        
         $this->helperCreateTestClassFile();
 
-        if( TRUE === $this->route->matchMap('/foo/bar/55') )
+        $route = mockery('Route', array(
+            'matchMap'      => TRUE,
+            'getMapClass'   => 'foo',
+            'getMapMethod'  => 'bar'
+        ));
+
+        $dispatcher = new Dispatcher;
+        $dispatcher->setSuffix('Class');
+
+        if( TRUE === $route->matchMap('/foo/bar/55') )
         {
-            $res = Dispatcher::dispatch($this->route);
+            $res = $dispatcher->dispatch($route);
             $this->isTrue( $res );
         }
         else
@@ -172,24 +190,6 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
         }
 
         
-    }
-
-    public function testFailDispatch()
-    {
-        $this->helperCreateRouteObject();
-
-        $this->helperCreateTestClassFile();
-
-        if( FALSE === $this->route->matchMap('/im/not/in/here') )
-        {
-            try{
-                Dispatcher::dispatch($this->route);
-            } catch (classNotSpecifiedException $exception) {
-                return;
-            }
-        }
-
-        $this->fail('Should have caught classNotSpecifiedException, but did not');
     }
  
 }

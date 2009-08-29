@@ -10,21 +10,14 @@ class Dispatcher
     /**
      * The suffix used to append to the class name
      * @var string
-     * @static
      */
-    private static $_suffix = '.php';
+    private $_suffix = '.php';
 
     /**
      * The path to look for classes (or controllers)
      * @var string
-     * @static
      */
-    private static $_classPath;
-
-    /**
-     * Private constructor ensures no instances
-     */
-    private function __construct(){}
+    private $_classPath;
 
     /**
      * Attempts to dispatch the supplied Route object. Returns false if fails
@@ -37,9 +30,8 @@ class Dispatcher
      * @throws methodNotSpecifiedException
      * @return boolean
      * @access public
-     * @static
      */
-    public static function dispatch( Route &$route )
+    public function dispatch( Route &$route )
     {
         $class      = $route->getMapClass();
         $method     = $route->getMapMethod();
@@ -70,8 +62,8 @@ class Dispatcher
         }
 
         //Apply the suffix
-        $file_name = self::$_classPath . $class . self::$_suffix;
-        $class = $class . str_replace('.php', '', self::$_suffix);
+        $file_name = $this->_classPath . $class . $this->_suffix;
+        $class = $class . str_replace('.php', '', $this->_suffix);
         
         //At this point, we are relatively assured that the file name is safe
         // to check for it's existence and require in.
@@ -119,7 +111,7 @@ class Dispatcher
      */
     public function setSuffix( $suffix )
     {
-        self::$_suffix = $suffix . '.php';
+        $this->_suffix = $suffix . '.php';
     }
 
     /**
@@ -132,7 +124,7 @@ class Dispatcher
     {
         $path = preg_replace('/\/$/', '', $path);
 
-        self::$_classPath = $path . '/';
+        $this->_classPath = $path . '/';
     }
 }
 
