@@ -64,7 +64,7 @@
 
         <h2>Introduction</h2>
         <p>
-            The php url router system is designed to help you with php url routing by mapping
+            The php url routing system is designed to help you with php url routing by mapping
             so called &quot;pretty&quot; url&rsquo;s to class::methods that reside in your
             framework. It adopts the
             <a href="http://en.wikipedia.org/wiki/Front_Controller_pattern">
@@ -154,18 +154,41 @@
 
         <h2>Defining Routes</h2>
         <p>
-            Routes are defined by creating Route objects. You set the path, class,
+            At the heart of this routing system is the Route class which allows
+            you to define routes as objects. When creating a route object,
+            You set the path, class,
             method, and any dynamic elements.
         </p>
+        <p>
+            The constructor argument is the pattern of the url. The methods
+            setMapClass and setMapMethod add the class name and method that
+            should be invoked for this route. The addDynamicElement adds
+            regular expression matching patterns for any dynamic parts of the
+            url pattern.
+        </p>
 <pre>
+  //This route matches url's such as '/orders/show/12345', '/orders/show/99999'
+  //It will not match url's such as '/orders/show/abc45', '/orders/show/12'
   $route = new Route( '/orders/show/:order_id' );
   $route->setMapClass( 'orders' );
   $route->setMapMethod( 'show' );
   $route->addDynamicElement( ':order_id', '^\d{5}$' );
 </pre>
         <p>
-            You may wish for the class and/or method to be dynamic. You can
-            use regular expressions or just match anything in the path. Add as
+            You may wish for the class and/or method to be dynamic.
+            This is most useful when your url's mostly follow the same pattern.
+            For example, a common pattern is '/controller/method/id'. A route
+            for this pattern can be defined as follows:
+        </p>
+<pre>
+//This route will match any 3 part url such as '/foo/bar/1', '/foo/bar/red', etc.
+$route = new Route( '/:class/:method/:id' );
+$route->setMapClass( ':class' );
+$route->setMapMethod( ':method' );
+$route->addDynamicElement( ':id', ':id' );
+</pre>
+        <p>
+            Add as
             many routes as you need. Route matching is done in the order they
             are added. So, put the most specific routes first and the most
             generic route last.
@@ -291,7 +314,8 @@
   $orders_route->addDynamicElement( ':order_id', '^\d$' );
   $router->addRoute( 'orders', $ordes_route );
 
-  //Somewhere else in your code, you want to create url for 'orders' with id = 5:
+  //Later in your code, you can create a url that will look
+  //like: '/orders/show/5'
   $router->getUrl( 'orders', array( ':order_id' => 5 ) );
 </pre>
 
