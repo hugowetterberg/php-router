@@ -136,7 +136,7 @@
             elements which are separated by a &quot;/&quot;.
         </p>
         <p>
-            <i>Static</i> elements are hard wired parts of the path. The are not
+            <i>Static</i> elements are hard wired parts of the path. They are not
             substituted with variables. They either match the map or they do not.
         </p>
         <p>
@@ -291,7 +291,7 @@
   $orders_route->addDynamicElement( ':order_id', '^\d$' );
   $router->addRoute( 'orders', $ordes_route );
 
-  //Somewhere else you want to create url for 'orders' with id = 5:
+  //Somewhere else in your code, you want to create url for 'orders' with id = 5:
   $router->getUrl( 'orders', array( ':order_id' => 5 ) );
 </pre>
 
@@ -312,7 +312,7 @@
     include('PageError.php'); 
     include('php-router.php');
 
-    //Create a new instance of Router (you'd like use a factory or container to
+    //Create a new instance of Router (you'd likely use a factory or container to
     // manage the instance)
     $router = new Router;
 
