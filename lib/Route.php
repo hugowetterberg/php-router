@@ -175,7 +175,7 @@ class Route
 
         //If the number of elements in each path is not the same, there is no
         // way this could be it.
-        if( count($path_elements) !== count($match_elements) )
+        if( count($this_path_elements) !== count($match_path_elements) )
             return FALSE;
 
         //Construct a path string that will be used for matching
