@@ -59,26 +59,26 @@
             <span class="small">by <a href="http://github.com/robap">robap</a></span>
         </h1>
         <div class="description">
-            a php url routing system
+            a php url/uri routing library
         </div>
 
         <h2>Introduction</h2>
         <p>
-            The php url routing system is designed to help you with php url routing by mapping
+            The php url routing library is designed to help you with php url routing by mapping
             so called &quot;pretty&quot; url&rsquo;s to class::methods that reside in your
             framework. It adopts the
             <a href="http://en.wikipedia.org/wiki/Front_Controller_pattern">
             front controller</a> pattern in which all requests are passed through
             a centralized location. That centralized location then can use this
-            URL Routing system to pass control to some other part of your framework.
+            URL Routing library to pass control to some other part of your framework.
         </p>
         <p>
-            It is intended that this system be portable and flexible enough to
+            It is intended that this library be portable and flexible enough to
             include in your own framework (MVC or otherwise). Hopefully, you
             find it useful.
         </p>
         <p>
-            In creating a routing system, there are many ways to go about it.
+            In creating a routing library, there are many ways to go about it.
             I prefer a very
             verbose method of defining routes. I want to be able to tell with
             certainty where a path is going to be routed to.
@@ -154,7 +154,7 @@
 
         <h2>Defining Routes</h2>
         <p>
-            At the heart of this routing system is the Route class which allows
+            At the heart of this routing library is the Route class which allows
             you to define routes as objects. When creating a route object,
             You set the path, class,
             method, and any dynamic elements.
@@ -329,7 +329,7 @@ $route->addDynamicElement( ':id', ':id' );
 
     //...Stuff before routing occurs
 
-    //Set the include path so that the Routing system files can be included.
+    //Set the include path so that the Routing library files can be included.
     set_include_path(get_include_path() . PATH_SEPARATOR . '/path/to/php-router');
 
     //Include a PageError class which can be used later. You supply this class.
@@ -405,7 +405,7 @@ $route->addDynamicElement( ':id', ':id' );
                 Light on documentation, not much to go on.
             </li>
         </ul>
-        <h2>PHP Framework Routing systems</h2>
+        <h2>PHP Framework Routing</h2>
         <ul>
             <li><a href="http://codeigniter.com/user_guide/general/routing.html">
             Code Ignitor</a></li>
