@@ -226,37 +226,31 @@ $route->addDynamicElement( ':id', ':id' );
             of dispatching the Route object returned by the Router class.
         </p>
         <p>
-            Router::findRoute will return either FALSE if no match was found or
-            a modified Route object. Here is how the supplied Dispatcher class can
+            Router::findRoute will return a modified Route object or throw an
+            Exception if not found. Here is how the supplied Dispatcher class can
             be used.
         </p>
 <pre>
  $dispatcher = new Dispatcher;
- 
- $found_route = $router->findRoute( urldecode($_SERVER['REQUEST_URI']) );
 
- if( FALSE === $found_route )
- {
-    //Handle unmatched route
- }
- else
- {
-   try {
+ try {
+    $found_route = $router->findRoute( urldecode($_SERVER['REQUEST_URI']) );
     $dispatcher->dispatch( $found_route );
-   } catch ( badClassNameException $exception ) {
+ } catch ( RouteNotFoundException $exception ) {
     //handle Exception
-   } catch ( classFileNotFoundException $exception ) {
+ } catch ( badClassNameException $exception ) {
     //handle Exception
-   } catch ( classNameNotFoundException $exception ) {
+ } catch ( classFileNotFoundException $exception ) {
     //handle Exception
-   } catch ( classMethodNotFoundException $exception ) {
+ } catch ( classNameNotFoundException $exception ) {
     //handle Exception
-   } catch ( classNotSpecifiedException $exceptione ) {
+ } catch ( classMethodNotFoundException $exception ) {
     //handle Exception
-   } catch ( methodNotSpecifiedException $exception ) {
+ } catch ( classNotSpecifiedException $exceptione ) {
     //handle Exception
-   }
-}
+ } catch ( methodNotSpecifiedException $exception ) {
+    //handle Exception
+ }
 </pre>
         <p>
             Any matched dynamic elements in the Route object are passed by the
@@ -340,8 +334,7 @@ $route->addDynamicElement( ':id', ':id' );
     // manage the instance)
     $router = new Router;
 
-    //Create a new instance of Dispatcher (again, you would probably utilize a
-    // factory or container)
+    //Get an instance of Dispatcher
     $dispatcher = new Dispatcher;
     $dispatcher->setSuffix('Controller');
     $dispatcher->setClassPath('/path/to/controllers/');
@@ -349,40 +342,36 @@ $route->addDynamicElement( ':id', ':id' );
     //Set up a 'catch all' default route and add it to the Router.
     //You may want to set up an external file, define your routes there, and
     // and include that file in place of this code block.
-    $default_route = new Route('/:class/:method/:id');
-    $default_route->addDynamicElement(':class', ':class');
-    $default_route->addDynamicElement(':method', ':method');
-    $default_route->addDynamicElement(':id', ':id');
+    $std_route = new Route('/:class/:method/:id');
+    $std_route->addDynamicElement(':class', ':class');
+    $std_route->addDynamicElement(':method', ':method');
+    $std_route->addDynamicElement(':id', ':id');
+    $router->addRoute( 'std', $std_route );
+    //Set up your default route:
+    $default_route = new Route('/');
+    $default_route->setMapClass('default');
+    $default_route->setMapMethod('index');
     $router->addRoute( 'default', $default_route );
 
-    //Find the Route for your url
-    $url            = urldecode($_SERVER['REQUEST_URI']);
-    $found_route    = $router->findRoute($url);
+    $url = urldecode($_SERVER['REQUEST_URI']);
 
-    //Dispatch the Route
-    if( FALSE === $found_route )
-    {
+    try {
+        $found_route = $router->findRoute($url);
+        $dispatcher->dispatch( $found_route );
+    } catch ( RouteNotFoundException $e ) {
         PageError::show('404', $url);
-    }
-    else
-    {
-        //Note: you would likely use some other http status codes depending
-        // on the specific Exception thrown.
-        try {
-            $dispatcher->dispatch( $found_route );
-        } catch ( badClassNameException $e ) {
-            PageError::show('404', $url);
-        } catch ( classFileNotFoundException $e ) {
-            PageError::show('404', $url);
-        } catch ( classNameNotFoundException $e ) {
-            PageError::show('404', $url);
-        } catch ( classMethodNotFoundException $e ) {
-            PageError::show('404', $url);
-        } catch ( classNotSpecifiedException $e ) {
-            PageError::show('404', $url);
-        } catch ( methodNotSpecifiedException $e ) {
-            PageError::show('404', $url);
-        }
+    } catch ( badClassNameException $e ) {
+        PageError::show('400', $url);
+    } catch ( classFileNotFoundException $e ) {
+        PageError::show('500', $url);
+    } catch ( classNameNotFoundException $e ) {
+        PageError::show('500', $url);
+    } catch ( classMethodNotFoundException $e ) {
+        PageError::show('500', $url);
+    } catch ( classNotSpecifiedException $e ) {
+        PageError::show('500', $url);
+    } catch ( methodNotSpecifiedException $e ) {
+        PageError::show('500', $url);
     }
 ?&gt;</pre>
         
