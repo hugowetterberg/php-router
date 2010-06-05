@@ -31,7 +31,7 @@ class Dispatcher
      * @return boolean
      * @access public
      */
-    public function dispatch( Route &$route )
+    public function dispatch( Route $route )
     {
         $class      = $route->getMapClass();
         $method     = $route->getMapMethod();
@@ -135,4 +135,3 @@ class classMethodNotFoundException extends Exception{}
 class classNotSpecifiedException extends Exception{}
 class methodNotSpecifiedException extends Exception{}
 
-?>

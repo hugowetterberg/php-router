@@ -1,8 +1,66 @@
 <?php
 
 require_once('PHPUnit/Framework.php');
-require_once 'Mockery/Framework.php';
+include_once(dirname(__FILE__) . '/../lib/Route.php');
 include_once(dirname(__FILE__) . '/../lib/Router.php');
+
+class MockRoute_GetLink extends Route
+{
+    public function getDynamicElements(){
+        return array(
+            ':class'    => ':class',
+            ':method'   => ':method',
+            ':id'       => ':id'
+        );
+    }
+
+    public function getPath() {
+        return '/:class/:method/:id';
+    }
+}
+
+class MockRoute_FindRoute extends Route
+{
+    public function __construct( $path ) {
+        $this->path = $path;
+    }
+
+    public function matchMap() {
+        return TRUE;
+    }
+
+    public function getPath() {
+        return $this->path;
+    }
+}
+
+class MockRoute_FailToFindRoute extends Route
+{
+
+    public function matchMap() {
+        return FALSE;
+    }
+
+    public function getPath() {
+        return '/find/this/route';
+    }
+}
+
+class MockRoute_FindRouteInManyRoutesTrue extends Route
+{
+    public function matchMap() {
+        return TRUE;
+    }
+}
+
+class MockRoute_FindRouteInManyRoutesFalse extends Route
+{
+    public function matchMap() {
+        return FALSE;
+    }
+}
+
+/*----------------------------------------------------------------------------*/
 
 class RouterTest extends PHPUnit_Framework_TestCase
 {
@@ -10,7 +68,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
     {
         $router = new Router;
 
-        $route = mockery('Route');
+        $route = $this->getMock('Route');
 
         $router->addRoute( 'myroute', $route );
 
@@ -23,14 +81,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
     {
         $router = new Router;
 
-        $route = mockery('Route', array(
-            'getDynamicElements' => array(
-                ':class' => ':class',
-                ':method' => ':method',
-                ':id' => ':id'
-            ),
-            'getPath' => '/:class/:method/:id'
-        ));
+        $route = new MockRoute_GetLink();
 
         $router->addRoute( 'myroute', $route );
 
@@ -47,14 +98,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
     {
         $router = new Router;
 
-        $route = mockery('Route', array(
-            'getDynamicElements' => array(
-                ':class' => ':class',
-                ':method' => ':method',
-                ':id' => ':id'
-            ),
-            'getPath' => '/:class/:method/:id'
-        ));
+        $route = new MockRoute_GetLink();
 
         $router->addRoute( 'myroute', $route );
         
@@ -75,14 +119,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
     {
         $router = new Router;
 
-        $route = mockery('Route', array(
-            'getDynamicElements' => array(
-                ':class' => ':class',
-                ':method' => ':method',
-                ':id' => ':id'
-            ),
-            'getPath' => '/:class/:method/:id'
-        ));
+        $route = new MockRoute_GetLink();
 
         $router->addRoute( 'myroute', $route );
 
@@ -90,7 +127,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $failed_url = $router->getUrl( 'not_there', array(
             ':class'    => 'myclass',
             ':method'   => 'mymethod',
-            ':id'        => 1
+            ':id'       => 1
         ));
     }
 
@@ -101,14 +138,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
     {
         $router = new Router;
         
-        $route = mockery('Route', array(
-            'getDynamicElements' => array(
-                ':class' => ':class',
-                ':method' => ':method',
-                ':id' => ':id'
-            ),
-            'getPath' => '/:class/:method/:id'
-        ));
+        $route = new MockRoute_GetLink();
 
         $router->addRoute( 'myroute', $route );
 
@@ -116,7 +146,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $failed_url = $router->getUrl( 'myroute', array(
             ':class'    => 'myclass',
             ':method'   => 'mymethod',
-            ':wrong'        => 1
+            ':wrong'    => 1
         ));
     }
 
@@ -127,14 +157,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
     {
         $router = new Router;
 
-        $route = mockery('Route', array(
-            'getDynamicElements' => array(
-                ':class' => ':class',
-                ':method' => ':method',
-                ':id' => ':id'
-            ),
-            'getPath' => '/:class/:method/:id'
-        ));
+        $route = new MockRoute_GetLink();
 
         $router->addRoute( 'myroute', $route );
 
@@ -154,12 +177,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
 
         $path = '/find/this/class';
         
-        $route = mockery('Route', array(
-            'matchMap' => TRUE,
-            'getPath' => $path
-        ));
-
-        
+        $route = new MockRoute_FindRoute($path);
 
         $router->addRoute( 'myroute', $route );
 
@@ -171,21 +189,17 @@ class RouterTest extends PHPUnit_Framework_TestCase
 
     /**
      * @depends testAddRoute
+     * @expectedException RouteNotFoundException
      */
     public function testFailToFindRoute()
     {
         $router = new Router;
 
-        $route = mockery('Route', array(
-            'matchMap' => FALSE,
-            'getPath' => '/find/this/route'
-        ));
+        $route = new MockRoute_FailToFindRoute();
 
         $router->addRoute( 'myroute', $route );
 
-        $found_route = $router->findRoute( '/fail/to/find/this/route' );
-
-        $this->assertFalse( $found_route );
+        $router->findRoute( '/fail/to/find/this/route' );
     }
 
     /**
@@ -195,16 +209,12 @@ class RouterTest extends PHPUnit_Framework_TestCase
     {
         $router = new Router;
 
-        $id_route = mockery('Route', array(
-            'matchMap' => TRUE
-        ));
+        $id_route = new MockRoute_FindRouteInManyRoutesTrue();
 
         $router->addRoute( 'id', $id_route );
 
         //Here is a default route (should go last)
-        $def_route = mockery('Route', array(
-            'matchMap' => FALSE
-        ));
+        $def_route = new MockRoute_FindRouteInManyRoutesFalse();
     
         $router->addRoute( 'default', $def_route );
 

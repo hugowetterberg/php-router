@@ -1,13 +1,103 @@
 <?php
 require_once('PHPUnit/Framework.php');
-require_once 'Mockery/Framework.php';
+
 include_once(dirname(__FILE__) . '/../lib/Dispatcher.php');
+include_once(dirname(__FILE__) . '/../lib/Route.php');
+
+class MockRoute_ClassFileNotFound extends Route
+{
+    public function matchMap(){
+        return TRUE;
+    }
+
+    public function getMapClass() {
+        return 'noclassnameClass';
+    }
+
+    public function getMapMethod() {
+        return 'method';
+    }
+}
+
+class MockRoute_CatchClassNotSpecified extends Route
+{
+    public function matchMap(){
+        return TRUE;
+    }
+
+    public function getMapClass() {
+        return '';
+    }
+
+    public function getMapMethod() {
+        return 'method';
+    }
+}
+
+class MockRoute_CatchMethodNotSpecified extends Route
+{
+    public function matchMap(){
+        return TRUE;
+    }
+
+    public function getMapClass() {
+        return 'someclass';
+    }
+
+    public function getMapMethod() {
+        return '';
+    }
+}
+
+class MockRoute_CatchBadClassName extends Route
+{
+    public function matchMap(){
+        return TRUE;
+    }
+
+    public function getMapClass() {
+        return 'foo\"';
+    }
+
+    public function getMapMethod() {
+        return 'method';
+    }
+}
+
+class MockRoute_CatchClassMethodNotFound extends Route
+{
+    public function matchMap(){
+        return TRUE;
+    }
+
+    public function getMapClass() {
+        return 'foo';
+    }
+
+    public function getMapMethod() {
+        return 'nomethod';
+    }
+}
+
+class MockRoute_Success extends Route
+{
+    public function matchMap(){
+        return TRUE;
+    }
+
+    public function getMapClass() {
+        return 'foo';
+    }
+
+    public function getMapMethod() {
+        return 'bar';
+    }
+}
+
+/*----------------------------------------------------------------------------*/
 
 class DispatcherTest extends PHPUnit_Framework_TestCase
 {
-
-   
-
     public function tearDown()
     {
         @unlink('fooClass.php');
@@ -32,11 +122,7 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
 
     public function testCatchClassFileNotFound()
     {
-        $route = mockery('Route', array(
-            'matchMap'      => TRUE,
-            'getMapClass'   => 'class',
-            'getMapMethod'  => 'method'
-        ));
+        $route = new MockRoute_ClassFileNotFound;
 
         $route->matchMap('/no_class/bar/55');
 
@@ -66,11 +152,7 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
         fwrite($fh, $contents);
         fclose($fh);
 
-        $route = mockery('Route', array(
-            'matchMap'      => TRUE,
-            'getMapClass'   => 'noclassnameClass',
-            'getMapMethod'  => 'method'
-        ));
+        $route = new MockRoute_ClassFileNotFound();
 
         $dispatcher = new Dispatcher;
 
@@ -86,11 +168,7 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
 
     public function testCatchClassNotSpecified()
     {
-        $route = mockery('Route', array(
-            'matchMap'      => FALSE,
-            'getMapClass'   => '',
-            'getMapMethod'  => 'method'
-        ));
+        $route = new MockRoute_CatchClassNotSpecified();
 
         $dispatcher = new Dispatcher;
 
@@ -105,11 +183,7 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
 
     public function testCatchBadClassName()
     {
-        $route = mockery('Route', array(
-            'matchMap'      => FALSE,
-            'getMapClass'   => 'foo\"',
-            'getMapMethod'  => 'method'
-        ));
+        $route = new MockRoute_CatchBadClassName();
 
         $dispatcher = new Dispatcher;
 
@@ -126,11 +200,7 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
     {
         $this->helperCreateTestClassFile();
 
-        $route = mockery('Route', array(
-            'matchMap'      => FALSE,
-            'getMapClass'   => 'foo',
-            'getMapMethod'  => ''
-        ));
+        $route = new MockRoute_CatchMethodNotSpecified();
 
         $dispatcher = new Dispatcher;
 
@@ -140,7 +210,6 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
             return;
         }
 
-
         $this->fail('Catching method not specified failed ');
     }
 
@@ -148,11 +217,7 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
     {
         $this->helperCreateTestClassFile();
 
-        $route = mockery('Route', array(
-            'matchMap'      => TRUE,
-            'getMapClass'   => 'foo',
-            'getMapMethod'  => 'nomethod'
-        ));
+        $route = new MockRoute_CatchClassMethodNotFound();
 
         $dispatcher = new Dispatcher;
         $dispatcher->setSuffix('Class');
@@ -170,11 +235,7 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
     {
         $this->helperCreateTestClassFile();
 
-        $route = mockery('Route', array(
-            'matchMap'      => TRUE,
-            'getMapClass'   => 'foo',
-            'getMapMethod'  => 'bar'
-        ));
+        $route = new MockRoute_Success();
 
         $dispatcher = new Dispatcher;
         $dispatcher->setSuffix('Class');
@@ -188,10 +249,6 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
         {
             $this->fail('The route could not be mapped');
         }
-
-        
     }
- 
 }
 
-?>

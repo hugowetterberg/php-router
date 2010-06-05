@@ -77,23 +77,22 @@ class Router
     /**
      * Finds a maching route in the routes array using specified $path
      * @param string $path
-     * @return mixed Route/Boolean
+     * @return Route
+     * @throws RouteNotFoundException
      * @access public
      */
     public function findRoute( $path )
     {
-        $found_route = FALSE;
-
         foreach( $this->_routes as $route )
         {
             if( TRUE === $route->matchMap( $path ) )
             {
-                $found_route = $route;
-                break;
+                return $route;
             }
         }
 
-        return $found_route;
+        throw new RouteNotFoundException;
     }
 }
-?>
+
+class RouteNotFoundException extends Exception{}
