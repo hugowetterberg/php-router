@@ -166,8 +166,8 @@ class Route
         $found_dynamic_args   = array();
 
         //The process of matching is easier if there are no preceding slashes
-        $temp_this_path     = ereg_replace('^/', '', $this->_path);
-        $temp_path_to_match = ereg_replace('^/', '', $path_to_match);
+        $temp_this_path     = preg_replace('/^\//', '', $this->_path);
+        $temp_path_to_match = preg_replace('/^\//', '', $path_to_match);
 
         //Get the path elements used for matching later
         $this_path_elements  = explode('/', $temp_this_path);
