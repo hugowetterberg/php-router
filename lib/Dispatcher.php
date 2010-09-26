@@ -11,16 +11,24 @@ class Dispatcher
      * The suffix used to append to the class name
      * @var string
      */
-    private $_suffix = '.php';
+    private $suffix;
 
     /**
      * The path to look for classes (or controllers)
      * @var string
      */
-    private $_classPath;
+    private $classPath;
 
     /**
-     * Attempts to dispatch the supplied Route object. Returns false if fails
+     * Class constructor
+     */
+    public function __construct()
+    {
+        $this->setSuffix('');
+    }
+
+    /**
+     * Attempts to dispatch the supplied Route object. Returns false if it fails
      * @param Route $route
      * @throws classFileNotFoundException
      * @throws badClassNameException
@@ -28,25 +36,19 @@ class Dispatcher
      * @throws classMethodNotFoundException
      * @throws classNotSpecifiedException
      * @throws methodNotSpecifiedException
-     * @return boolean
-     * @access public
+     * @return mixed - result of controller method or FALSE on error
      */
     public function dispatch( Route $route )
     {
-        $class      = $route->getMapClass();
-        $method     = $route->getMapMethod();
+        $class      = trim($route->getMapClass());
+        $method     = trim($route->getMapMethod());
         $arguments  = $route->getMapArguments();
 
-        if( '' === trim($class) )
-        {
+        if( '' === $class )
             throw new classNotSpecifiedException('Class Name not specified');
-            return FALSE;
-        }
 
-        if( '' === trim($method) )
-        {
+        if( '' === $method )
             throw new methodNotSpecifiedException('Method Name not specified');
-        }
 
         //Because the class could have been matched as a dynamic element,
         // it would mean that the value in $class is untrusted. Therefore,
@@ -55,68 +57,60 @@ class Dispatcher
         $class = str_replace('\\', '', $class);
         preg_match('/^[a-zA-Z0-9_]+$/', $class, $matches);
         if( count($matches) !== 1 )
-        {
             throw new badClassNameException('Disallowed characters in class name ' . $class);
-        }
 
         //Apply the suffix
-        $file_name = $this->_classPath . $class . $this->_suffix;
-        $class = $class . str_replace('.php', '', $this->_suffix);
+        $file_name = $this->classPath . $class . $this->suffix;
+        $class = $class . str_replace('.php', '', $this->suffix);
         
         //At this point, we are relatively assured that the file name is safe
         // to check for it's existence and require in.
         if( FALSE === file_exists($file_name) )
-        {
             throw new classFileNotFoundException('Class file not found');
-        }
         else
-        {
             require_once($file_name);
-        }
 
         //Check for the class class
         if( FALSE === class_exists($class) )
-        {
             throw new classNameNotFoundException('class not found ' . $class);
-        }
 
         //Check for the method
         if( FALSE === method_exists($class, $method))
-        {
             throw new classMethodNotFoundException('method not found ' . $method);
-        }
 
         //All above checks should have confirmed that the class can be instatiated
         // and the method can be called
         $obj = new $class;
-        $call_func_result = call_user_func(array($obj, $method), $arguments);
-
-        //PHP's call_user_func array returns false if there was an error
-       return ( FALSE === $call_func_result );
+        return call_user_func(array($obj, $method), $arguments);
     }
 
     /**
      * Sets a suffix to append to the class name being dispatched
      * @param string $suffix
-     * @access public
-     * @return void
+     * @return Dispatcher
      */
     public function setSuffix( $suffix )
     {
-        $this->_suffix = $suffix . '.php';
+        $this->suffix = $suffix . $this->getFileExtension();
+
+        return $this;
     }
 
     /**
      * Set the path where dispatch class (controllers) reside
      * @param string $path
-     * @access public
-     * @return void
+     * @return Dispatcher
      */
     public function setClassPath( $path )
     {
-        $path = preg_replace('/\/$/', '', $path);
+        $this->classPath = preg_replace('/\/$/', '', $path) . '/';
 
-        $this->_classPath = $path . '/';
+        return $this;
+    }
+
+    private function getFileExtension()
+    {
+        return '.php';
     }
 }
 

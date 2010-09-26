@@ -11,7 +11,7 @@ class Router
      * Stores the Route objects
      * @var array
      */
-    private $_routes = array();
+    private $routes = array();
     
     /**
      * Adds a named route to the list of possible routes
@@ -21,7 +21,7 @@ class Router
      */
     public function addRoute( $name, $route )
     {
-        $this->_routes[$name] = $route;
+        $this->routes[$name] = $route;
 
         return $this;
     }
@@ -32,7 +32,7 @@ class Router
      */
     public function getRoutes()
     {
-        return $this->_routes;
+        return $this->routes;
     }
 
     /**
@@ -45,16 +45,16 @@ class Router
      */
     public function getUrl( $name, $args = array() )
     {
-        if( TRUE !== array_key_exists($name, $this->_routes) )
+        if( TRUE !== array_key_exists($name, $this->routes) )
             throw new NamedPathNotFoundException;
         
         $match_ok = TRUE;
 
         //Check for the correct number of arguments
-        if( count($args) !== count($this->_routes[$name]->getDynamicElements()) )
+        if( count($args) !== count($this->routes[$name]->getDynamicElements()) )
             $match_ok = FALSE;
 
-        $path = $this->_routes[$name]->getPath();
+        $path = $this->routes[$name]->getPath();
         foreach( $args as $arg_key => $arg_value )
         {
             $path = str_replace( $arg_key, $arg_value, $path, $count );
@@ -76,7 +76,7 @@ class Router
      */
     public function findRoute( $path )
     {
-        foreach( $this->_routes as $route )
+        foreach( $this->routes as $route )
         {
             if( TRUE === $route->matchMap( $path ) )
             {

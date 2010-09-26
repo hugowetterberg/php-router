@@ -11,31 +11,31 @@ class Route
      * The Route path consisting of route elements
      * @var string
      */
-    private $_path;
+    private $path;
 
     /**
      * The name of the class that this route maps to
      * @var string
      */
-    private $_class;
+    private $class;
 
     /**
      * The name of the class method that this route maps to
      * @var string
      */
-    private $_method;
+    private $method;
     
     /**
      * Stores any set dynamic elements
      * @var array 
      */
-    private $_dynamicElements = array();
+    private $dynamicElements = array();
     
     /**
      * Stores any arguments found when mapping
      * @var array 
      */
-    private $_mapArguments = array();
+    private $mapArguments = array();
 
     /**
      * Class Constructor
@@ -54,7 +54,7 @@ class Route
      */
     public function setPath( $path )
     {
-        $this->_path = $path;
+        $this->path = $path;
 
         return $this;
     }
@@ -66,7 +66,7 @@ class Route
      */
     public function getPath()
     {
-        return $this->_path;
+        return $this->path;
     }
     /**
      * Set the map class name
@@ -75,7 +75,7 @@ class Route
      */
     public function setMapClass( $class )
     {
-        $this->_class = $class;
+        $this->class = $class;
 
         return $this;
     }
@@ -87,7 +87,7 @@ class Route
      */
     public function getMapClass()
     {
-        return $this->_class;
+        return $this->class;
     }
     
     /**
@@ -97,7 +97,7 @@ class Route
      */
     public function setMapMethod( $method )
     {
-        $this->_method = $method;
+        $this->method = $method;
 
         return $this;
     }
@@ -108,7 +108,7 @@ class Route
      */
     public function getMapMethod()
     {
-        return $this->_method;
+        return $this->method;
     }
 
     /**
@@ -119,7 +119,7 @@ class Route
      */
     public function addDynamicElement( $key, $value )
     {
-        $this->_dynamicElements[$key] = $value;
+        $this->dynamicElements[$key] = $value;
 
         return $this;
     }
@@ -130,7 +130,7 @@ class Route
      */
     public function getDynamicElements()
     {
-        return $this->_dynamicElements;
+        return $this->dynamicElements;
     }
 
     /**
@@ -139,9 +139,9 @@ class Route
      * @param string $value
      * @return void
      */
-    private function _addMapArguments( $key, $value )
+    private function addMapArguments( $key, $value )
     {
-        $this->_mapArguments[$key] = $value;
+        $this->mapArguments[$key] = $value;
     }
     
     /**
@@ -150,7 +150,7 @@ class Route
      */
     public function getMapArguments()
     {
-        return $this->_mapArguments;
+        return $this->mapArguments;
     }
 
     /**
@@ -165,7 +165,7 @@ class Route
         $found_dynamic_args   = array();
 
         //The process of matching is easier if there are no preceding slashes
-        $temp_this_path     = preg_replace('/^\//', '', $this->_path);
+        $temp_this_path     = preg_replace('/^\//', '', $this->path);
         $temp_path_to_match = preg_replace('/^\//', '', $path_to_match);
 
         //Get the path elements used for matching later
@@ -196,12 +196,12 @@ class Route
             }
 
             //Consult the dynamic array for help in matching
-            if( TRUE === isset($this->_dynamicElements[$this_path_element]) )
+            if( TRUE === isset($this->dynamicElements[$this_path_element]) )
             {
                 //The dynamic array either contains a key like ':id' or a
                 // regular expression. In the case of a key, the key matches
                 // anything
-                if( $this->_dynamicElements[$this_path_element] === $this_path_element )
+                if( $this->dynamicElements[$this_path_element] === $this_path_element )
                 {
                     $possible_match_string .= "/{$match_path_elements[$i]}";
 
@@ -224,7 +224,7 @@ class Route
                 }
 
                 //Attempt a regular expression match
-                $regexp = '/' . $this->_dynamicElements[$this_path_element] . '/';
+                $regexp = '/' . $this->dynamicElements[$this_path_element] . '/';
                 if( preg_match( $regexp, $match_path_elements[$i] ) > 0 )
                 {
                     //The class and/or method may be getting set dynamically. If so
@@ -265,7 +265,7 @@ class Route
 
             foreach( $found_dynamic_args as $key => $found_dynamic_arg )
             {
-                $this->_addMapArguments($key, $found_dynamic_arg);
+                $this->addMapArguments($key, $found_dynamic_arg);
             }
 
             return TRUE;

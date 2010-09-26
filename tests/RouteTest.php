@@ -17,14 +17,14 @@ class RouteTest extends PHPUnit_Framework_TestCase
 
         $test_path = '/:class/:method/:id';
         $route->setPath( $test_path );
-        $this->assertAttributeEquals($test_path, '_path', $route);
+        $this->assertAttributeEquals($test_path, 'path', $route);
     }
 
     public function testSetRoutePathByConstructor()
     {
         $test_path = '/:class/:method/:id';
         $route = new Route( $test_path );
-        $this->assertAttributeEquals($test_path, '_path', $route);
+        $this->assertAttributeEquals($test_path, 'path', $route);
     }
 
     public function testGetRoutPath()
@@ -47,8 +47,8 @@ class RouteTest extends PHPUnit_Framework_TestCase
         $route->setMapClass( $test_class );
         $route->setMapMethod( $test_method );
 
-        $this->assertAttributeEquals( $test_class, '_class', $route );
-        $this->assertAttributeEquals( $test_method, '_method', $route );
+        $this->assertAttributeEquals( $test_class, 'class', $route );
+        $this->assertAttributeEquals( $test_method, 'method', $route );
     }
 
     public function testGetMapClassMethod()

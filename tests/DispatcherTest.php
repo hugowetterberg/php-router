@@ -250,5 +250,13 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
             $this->fail('The route could not be mapped');
         }
     }
+
+    public function testMethodsAreChainable()
+    {
+      $dispatcher = new Dispatcher();
+
+      $this->assertSame($dispatcher, $dispatcher->setSuffix(''));
+      $this->assertSame($dispatcher, $dispatcher->setClassPath(''));
+    }
 }
 
