@@ -46,7 +46,6 @@ class Dispatcher
         if( '' === trim($method) )
         {
             throw new methodNotSpecifiedException('Method Name not specified');
-            return FALSE;
         }
 
         //Because the class could have been matched as a dynamic element,
@@ -58,7 +57,6 @@ class Dispatcher
         if( count($matches) !== 1 )
         {
             throw new badClassNameException('Disallowed characters in class name ' . $class);
-            return FALSE;
         }
 
         //Apply the suffix
@@ -70,7 +68,6 @@ class Dispatcher
         if( FALSE === file_exists($file_name) )
         {
             throw new classFileNotFoundException('Class file not found');
-            return FALSE;
         }
         else
         {
@@ -81,14 +78,12 @@ class Dispatcher
         if( FALSE === class_exists($class) )
         {
             throw new classNameNotFoundException('class not found ' . $class);
-            return FALSE;
         }
 
         //Check for the method
         if( FALSE === method_exists($class, $method))
         {
             throw new classMethodNotFoundException('method not found ' . $method);
-            return FALSE;
         }
 
         //All above checks should have confirmed that the class can be instatiated
@@ -97,10 +92,7 @@ class Dispatcher
         $call_func_result = call_user_func(array($obj, $method), $arguments);
 
         //PHP's call_user_func array returns false if there was an error
-        if( FALSE === $call_func_result )
-            return FALSE;
-        else
-            return TRUE;
+       return ( FALSE === $call_func_result );
     }
 
     /**

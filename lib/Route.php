@@ -50,12 +50,13 @@ class Route
     /**
      * Set the route path
      * @param string $path
-     * @return void
-     * @access public
+     * @return Route
      */
     public function setPath( $path )
     {
         $this->_path = $path;
+
+        return $this;
     }
 
     /**
@@ -70,12 +71,13 @@ class Route
     /**
      * Set the map class name
      * @param string $class
-     * @access public
-     * @return void
+     * @return Route
      */
     public function setMapClass( $class )
     {
         $this->_class = $class;
+
+        return $this;
     }
 
     /**
@@ -91,18 +93,18 @@ class Route
     /**
      * Sets the map method name
      * @param string $method
-     * @access public
-     * @return void
+     * @return Route
      */
     public function setMapMethod( $method )
     {
         $this->_method = $method;
+
+        return $this;
     }
 
     /**
      * Gets the currently set map method
      * @return string
-     * @access public
      */
     public function getMapMethod()
     {
@@ -113,18 +115,18 @@ class Route
      * Adds a dynamic element to the Route
      * @param string $key
      * @param string $value
-     * @access public
-     * @return void
+     * @return Route
      */
     public function addDynamicElement( $key, $value )
     {
         $this->_dynamicElements[$key] = $value;
+
+        return $this;
     }
 
     /**
      * Get the dynamic elements array
      * @return array
-     * @access public
      */
     public function getDynamicElements()
     {
@@ -135,7 +137,6 @@ class Route
      * Adds a found argument to the _mapArguments array
      * @param string $key
      * @param string $value
-     * @access public
      * @return void
      */
     private function _addMapArguments( $key, $value )
@@ -146,7 +147,6 @@ class Route
     /**
      * Gets the _mapArguments array
      * @return array
-     * @access public
      */
     public function getMapArguments()
     {
@@ -157,7 +157,6 @@ class Route
      * Attempt to match this route to a supplied path
      * @param string $path_to_match
      * @return boolean
-     * @access public
      */
     public function matchMap( $path_to_match )
     {

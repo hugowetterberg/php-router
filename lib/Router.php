@@ -10,8 +10,6 @@ class Router
     /**
      * Stores the Route objects
      * @var array
-     * @static
-     * @access private
      */
     private $_routes = array();
     
@@ -19,18 +17,18 @@ class Router
      * Adds a named route to the list of possible routes
      * @param string $name
      * @param Route $route
-     * @access public
-     * @return void
+     * @return Router
      */
     public function addRoute( $name, $route )
     {
         $this->_routes[$name] = $route;
+
+        return $this;
     }
 
     /**
      * Returns the routes array
-     * @return array
-     * @access public
+     * @return [Route]
      */
     public function getRoutes()
     {
@@ -41,37 +39,33 @@ class Router
      * Builds and gets a url for the named route
      * @param string $name
      * @param array $args
+     * @throws NamedPathNotFoundException
+     * @throws InvalidArgumentException
      * @return string the url
      */
     public function getUrl( $name, $args = array() )
     {
-        if( TRUE === isset($this->_routes[$name]) )
-        {
-            $match_ok = TRUE;
+        if( TRUE !== array_key_exists($name, $this->_routes) )
+            throw new NamedPathNotFoundException;
+        
+        $match_ok = TRUE;
 
-            //Check for the correct number of arguments
-            if( count($args) !== count($this->_routes[$name]->getDynamicElements()) )
+        //Check for the correct number of arguments
+        if( count($args) !== count($this->_routes[$name]->getDynamicElements()) )
+            $match_ok = FALSE;
+
+        $path = $this->_routes[$name]->getPath();
+        foreach( $args as $arg_key => $arg_value )
+        {
+            $path = str_replace( $arg_key, $arg_value, $path, $count );
+            if( 1 !== $count )
                 $match_ok = FALSE;
-
-            $path = $this->_routes[$name]->getPath();
-            foreach( $args as $arg_key => $arg_value )
-            {
-                $path = str_replace( $arg_key, $arg_value, $path, $count );
-                if( 1 !== $count )
-                    $match_ok = FALSE;
-            }
-
-            //Check that all of the argument keys matched up with the dynamic elements
-            if( FALSE === $match_ok )
-                trigger_error('Incorrect arguments for named path');
-
-            return $path;
         }
-        else
-        {
-            trigger_error('Named Path not found in Router');
-            return '';
-        }
+
+        //Check that all of the argument keys matched up with the dynamic elements
+        if( FALSE === $match_ok ) throw new InvalidArgumentException;
+
+        return $path;
     }
 
     /**
@@ -79,7 +73,6 @@ class Router
      * @param string $path
      * @return Route
      * @throws RouteNotFoundException
-     * @access public
      */
     public function findRoute( $path )
     {
@@ -96,3 +89,4 @@ class Router
 }
 
 class RouteNotFoundException extends Exception{}
+class NamedPathNotFoundException extends Exception{}

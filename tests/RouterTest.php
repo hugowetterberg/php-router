@@ -113,9 +113,9 @@ class RouterTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException PHPUnit_Framework_Error
+     * @expectedException NamedPathNotFoundException
      */
-    public function testGetUrlNonExistentRoute()
+    public function testGetUrlNamedRouteDoesNotExist()
     {
         $router = new Router;
 
@@ -132,7 +132,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException PHPUnit_Framework_Error
+     * @expectedException InvalidArgumentException
      */
     public function testGetUrlWrongArgumentForNamedRoute()
     {
@@ -142,7 +142,6 @@ class RouterTest extends PHPUnit_Framework_TestCase
 
         $router->addRoute( 'myroute', $route );
 
-        //a php error should be triggered
         $failed_url = $router->getUrl( 'myroute', array(
             ':class'    => 'myclass',
             ':method'   => 'mymethod',
@@ -151,7 +150,7 @@ class RouterTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException PHPUnit_Framework_Error
+     * @expectedException InvalidArgumentException
      */
     public function testGetUrlWrongNumberOfArgumentsForNamedRoutes()
     {
@@ -161,7 +160,6 @@ class RouterTest extends PHPUnit_Framework_TestCase
 
         $router->addRoute( 'myroute', $route );
 
-        //a php error should be triggered
         $failed_url = $router->getUrl( 'myroute', array(
             ':class'    => 'myclass',
             ':method'   => 'mymethod'
@@ -230,6 +228,13 @@ class RouterTest extends PHPUnit_Framework_TestCase
         {
             $this->fail( 'Found result is not an Object' );
         }
+    }
+
+    public function testMethodsAreChainable()
+    {
+        $router = new Router;
+
+        $this->assertSame($router, $router->addRoute('test', new Route));
     }
 }
 

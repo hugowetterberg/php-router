@@ -195,6 +195,16 @@ class RouteTest extends PHPUnit_Framework_TestCase
         $this->assertArrayHasKey(':id1', $args_array);
         $this->assertArrayHasKey(':id2', $args_array);
     }
+
+    public function testRouteMethodsAreChainable()
+    {
+        $route = new Route;
+
+        $this->assertSame($route, $route->setPath(''));
+        $this->assertSame($route, $route->setMapClass(''));
+        $this->assertSame($route, $route->setMapMethod(''));
+        $this->assertSame($route, $route->addDynamicElement('', ''));
+    }
 }
 
 ?>
