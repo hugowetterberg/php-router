@@ -164,15 +164,15 @@
             setMapClass and setMapMethod add the class name and method that
             should be invoked for this route. The addDynamicElement adds
             regular expression matching patterns for any dynamic parts of the
-            url pattern.
+            url pattern. (note in the examples below that many of the methods
+            are chainable)
         </p>
 <pre>
   //This route matches url's such as '/orders/show/12345', '/orders/show/99999'
   //It will not match url's such as '/orders/show/abc45', '/orders/show/12'
   $route = new Route( '/orders/show/:order_id' );
-  $route->setMapClass( 'orders' );
-  $route->setMapMethod( 'show' );
-  $route->addDynamicElement( ':order_id', '^\d{5}$' );
+  $route->setMapClass( 'orders' )->setMapMethod( 'show' )
+        ->addDynamicElement( ':order_id', '^\d{5}$' );
 </pre>
         <p>
             You may wish for the class and/or method to be dynamic.
@@ -183,9 +183,8 @@
 <pre>
 //This route will match any 3 part url such as '/foo/bar/1', '/foo/bar/red', etc.
 $route = new Route( '/:class/:method/:id' );
-$route->setMapClass( ':class' );
-$route->setMapMethod( ':method' );
-$route->addDynamicElement( ':id', ':id' );
+$route->setMapClass( ':class' )->setMapMethod( ':method' )
+      ->addDynamicElement( ':id', ':id' );
 </pre>
         <p>
             Add as
@@ -197,15 +196,15 @@ $route->addDynamicElement( ':id', ':id' );
 <pre>
   //Define matching rules to match class and method
   $route = new Route( '/:class/:method/:order_id' );
-  $route->setMapClass( '^o' ); //matches class beginning with 'o'
-  $route->setMapMethod( '^show_' ); //matches action beginning with 'show_'
-  $route->addDynamicElement( ':order_id', '^\d{5}$' ); //matches regexp
+  $route->setMapClass( '^o' ) //matches class beginning with 'o'
+        ->setMapMethod( '^show_' ) //matches action beginning with 'show_'
+        ->addDynamicElement( ':order_id', '^\d{5}$' ); //matches regexp
 
   //Match any class and method
   $route = new Route( '/:class/:method/:order_id' );
-  $route->setMapClass( ':class' ); //matches any :class
-  $route->setMapMethod( ':method' ); //matches any :action
-  $route->addDynamicElement( ':id', ':id' ); //matches any :id
+  $route->setMapClass( ':class' ) //matches any :class
+        ->setMapMethod( ':method' ) //matches any :action
+        ->addDynamicElement( ':id', ':id' ); //matches any :id
 </pre>
 
         <h2>Adding routes</h2>
@@ -303,9 +302,8 @@ $route->addDynamicElement( ':id', ':id' );
 
   //An example 'orders' route that might be set up
   $orders_route = new Route( '/orders/show/:order_id' );
-  $orders_route->setMapClass( 'orders' );
-  $orders_route->setMapMethod( 'show' );
-  $orders_route->addDynamicElement( ':order_id', '^\d$' );
+  $orders_route->setMapClass( 'orders' )->setMapMethod( 'show' )
+               ->addDynamicElement( ':order_id', '^\d$' );
   $router->addRoute( 'orders', $ordes_route );
 
   //Later in your code, you can create a url that will look
@@ -343,14 +341,14 @@ $route->addDynamicElement( ':id', ':id' );
     //You may want to set up an external file, define your routes there, and
     // and include that file in place of this code block.
     $std_route = new Route('/:class/:method/:id');
-    $std_route->addDynamicElement(':class', ':class');
-    $std_route->addDynamicElement(':method', ':method');
-    $std_route->addDynamicElement(':id', ':id');
+    $std_route->addDynamicElement(':class', ':class')
+              ->addDynamicElement(':method', ':method')
+              ->addDynamicElement(':id', ':id');
     $router->addRoute( 'std', $std_route );
+
     //Set up your default route:
     $default_route = new Route('/');
-    $default_route->setMapClass('default');
-    $default_route->setMapMethod('index');
+    $default_route->setMapClass('default')->setMapMethod('index');
     $router->addRoute( 'default', $default_route );
 
     $url = urldecode($_SERVER['REQUEST_URI']);
