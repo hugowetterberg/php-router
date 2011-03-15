@@ -1,6 +1,5 @@
 <?php
 
-require_once('PHPUnit/Framework.php');
 include_once(dirname(__FILE__) . '/../lib/Route.php');
 include_once(dirname(__FILE__) . '/../lib/Router.php');
 
@@ -235,6 +234,18 @@ class RouterTest extends PHPUnit_Framework_TestCase
         $router = new Router;
 
         $this->assertSame($router, $router->addRoute('test', new Route));
+    }
+    
+    public function testQueryParameters()
+    {
+        $router = new Router;
+        $route = new Route( "/2008-08-01/Accounts/:id/IncomingPhoneNumbers" );
+        $route->setMapClass( 'IncomingPhoneNumbers' )->setMapMethod( 'list' );
+        $route->addDynamicElement( ':id', ':id' );
+        $router->addRoute('test', $route);
+        $found = $router->findRoute( '/2008-08-01/Accounts/1/IncomingPhoneNumbers?a=1&b=2' );
+        
+        $this->assertSame($found, $route);
     }
 }
 

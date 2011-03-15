@@ -1,5 +1,4 @@
 <?php
-require_once('PHPUnit/Framework.php');
 
 include_once(dirname(__FILE__) . '/../lib/Dispatcher.php');
 include_once(dirname(__FILE__) . '/../lib/Route.php');

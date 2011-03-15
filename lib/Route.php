@@ -163,6 +163,10 @@ class Route
         $found_dynamic_class  = NULL;
         $found_dynamic_method = NULL;
         $found_dynamic_args   = array();
+        
+        //Ignore query parameters during matching
+        $parsed = parse_url($path_to_match);
+        $path_to_match = $parsed['path'];
 
         //The process of matching is easier if there are no preceding slashes
         $temp_this_path     = preg_replace('/^\//', '', $this->path);
