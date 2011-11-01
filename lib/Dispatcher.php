@@ -61,7 +61,7 @@ class Dispatcher
 
         //Apply the suffix
         $file_name = $this->classPath . $class . $this->suffix;
-        $class = $class . str_replace('.php', '', $this->suffix);
+        $class = $class . str_replace($this->getFileExtension(), '', $this->suffix);
         
         //At this point, we are relatively assured that the file name is safe
         // to check for it's existence and require in.
