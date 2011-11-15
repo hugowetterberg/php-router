@@ -30,6 +30,7 @@ class Dispatcher
     /**
      * Attempts to dispatch the supplied Route object. Returns false if it fails
      * @param Route $route
+     * @param mixed $context
      * @throws classFileNotFoundException
      * @throws badClassNameException
      * @throws classNameNotFoundException
@@ -38,7 +39,7 @@ class Dispatcher
      * @throws methodNotSpecifiedException
      * @return mixed - result of controller method or FALSE on error
      */
-    public function dispatch( Route $route )
+    public function dispatch( Route $route, $context = null )
     {
         $class      = trim($route->getMapClass());
         $method     = trim($route->getMapMethod());
@@ -80,7 +81,7 @@ class Dispatcher
 
         //All above checks should have confirmed that the class can be instatiated
         // and the method can be called
-        $obj = new $class;
+        $obj = new $class($context);
         return call_user_func(array($obj, $method), $arguments);
     }
 
