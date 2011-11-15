@@ -15,7 +15,7 @@ See [http://robap.github.com/php-router/](http://robap.github.com/php-router/)
 Dependencies
 -----------------------------
 
->= [php 5.2.x](http://www.php.net/)
+[php 5.2.x](http://www.php.net/) or later
 
 Install
 -----------------------------
